@@ -8,6 +8,8 @@
  * @module
  */
 
+import type * as appointments from "../appointments.js";
+import type * as slots from "../slots.js";
 import type * as users from "../users.js";
 
 import type {
@@ -17,6 +19,8 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  appointments: typeof appointments;
+  slots: typeof slots;
   users: typeof users;
 }>;
 

@@ -5,23 +5,42 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, BriefcaseMedical } from "lucide-react";
+import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, BriefcaseMedical, Plus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function ReceptionistDashboard() {
   const [search, setSearch] = useState("");
+  const [showCreate, setShowCreate] = useState(false);
+  const [newSlot, setNewSlot] = useState({ start: "09:00 AM", end: "10:00 AM", reg: 10, prio: 2 });
+  const [creating, setCreating] = useState(false);
 
-  const mockSlots = [
-    { time: "09:00 - 10:00", available: 2, total: 10, priority: 1 },
-    { time: "10:00 - 11:00", available: 0, total: 10, priority: 0 },
-    { time: "11:00 - 12:00", available: 5, total: 10, priority: 2 },
-  ];
+  const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
+  const createSlot = useMutation(api.slots.createSlot);
 
   const mockAtClinic = [
     { id: 1, name: "Alice Smith", type: "Priority", time: "10:05", status: "Waiting" },
     { id: 2, name: "Bob Johnson", type: "Regular", time: "10:12", status: "Waiting" },
     { id: 3, name: "Charlie Davis", type: "Regular", time: "09:50", status: "Consulting" },
   ];
+
+  const handleCreateSlot = async () => {
+    setCreating(true);
+    try {
+      await createSlot({
+        startTime: newSlot.start,
+        endTime: newSlot.end,
+        regularSlots: newSlot.reg,
+        prioritySlots: newSlot.prio
+      });
+      setShowCreate(false);
+    } catch(err) {
+      alert("Error creating slot");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -49,7 +68,7 @@ export default function ReceptionistDashboard() {
           </div>
           <div className="flex gap-4">
             <Button className="bg-amber-600 hover:bg-amber-700">
-              <UserPlus className="w-4 h-4 mr-2" /> Add Walk-in Patient
+              <UserPlus className="w-4 h-4 mr-2" /> Walk-in
             </Button>
           </div>
         </div>
@@ -57,36 +76,83 @@ export default function ReceptionistDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Quick Actions / Slots */}
           <section className="lg:col-span-1 space-y-6">
-            <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-              <Clock className="w-5 h-5 text-amber-600" /> Today's Slots
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
+                <Clock className="w-5 h-5 text-amber-600" /> Today's Slots
+              </h2>
+              <Button variant="outline" size="sm" onClick={() => setShowCreate(!showCreate)} className="h-8 shadow-sm">
+                <Plus className="w-4 h-4 mr-1 text-slate-400" /> New
+              </Button>
+            </div>
+
+            {showCreate && (
+              <Card className="bg-white border-blue-200 shadow-sm animate-in fade-in zoom-in-95">
+                <CardHeader className="py-4 border-b border-slate-100 bg-slate-50">
+                  <CardTitle className="text-sm font-semibold text-slate-700">Create Custom Slot</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-4 space-y-3">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-500 font-medium tracking-wide">Start</label>
+                      <Input value={newSlot.start} onChange={e => setNewSlot({...newSlot, start: e.target.value})} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-500 font-medium tracking-wide">End</label>
+                      <Input value={newSlot.end} onChange={e => setNewSlot({...newSlot, end: e.target.value})} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-emerald-600 font-medium tracking-wide">Reg Capacity</label>
+                      <Input type="number" value={newSlot.reg} onChange={e => setNewSlot({...newSlot, reg: Number(e.target.value)})} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-amber-600 font-medium tracking-wide">Prio Capacity</label>
+                      <Input type="number" value={newSlot.prio} onChange={e => setNewSlot({...newSlot, prio: Number(e.target.value)})} className="h-8 text-sm" />
+                    </div>
+                  </div>
+                  <Button className="w-full mt-2 h-8 bg-blue-600" onClick={handleCreateSlot} disabled={creating}>
+                    {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Database Slot"}
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="space-y-4">
-              {mockSlots.map((slot, idx) => (
-                <Card key={idx} className={`border ${slot.available === 0 ? 'bg-slate-50/50 border-slate-200' : 'bg-white border-blue-100 hover:border-blue-300'} transition-colors`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-md flex justify-between">
-                      {slot.time}
-                      {slot.available === 0 ? (
-                        <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200">Full</Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">{slot.available} left</Badge>
-                      )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-sm text-slate-500 pb-4">
-                    <div className="flex justify-between mb-1">
-                      <span>Regular: {slot.total - slot.priority - slot.available}/{slot.total}</span>
-                      <span>Priority: {slot.priority}/2</span>
-                    </div>
-                    <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
-                      <div 
-                        className={`h-full ${slot.available === 0 ? 'bg-red-400' : 'bg-blue-500'}`} 
-                        style={{ width: `${((slot.total - slot.available) / slot.total) * 100}%` }}
-                      ></div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {slots.length === 0 ? <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" /> : slots.map((slot: any) => {
+                const totalAppts = slot.regularSlots + slot.prioritySlots;
+                const capacityRemaining = slot.availableRegular + slot.availablePriority;
+                const isFull = capacityRemaining === 0;
+
+                return (
+                  <Card key={slot._id} className={`border shadow-none ${isFull ? 'bg-slate-50/50 border-slate-200' : 'bg-white border-blue-100 hover:border-blue-300'} transition-colors`}>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-md flex justify-between">
+                        {slot.startTime} - {slot.endTime}
+                        {isFull ? (
+                          <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200">Full</Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                            {capacityRemaining} left
+                          </Badge>
+                        )}
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="text-sm text-slate-500 pb-4">
+                      <div className="flex justify-between mb-1">
+                        <span>Reg Aval: {slot.availableRegular}/{slot.regularSlots}</span>
+                        <span>Pri Aval: {slot.availablePriority}/{slot.prioritySlots}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
+                        <div 
+                          className={`h-full ${isFull ? 'bg-red-400' : 'bg-blue-500'}`} 
+                          style={{ width: `${((totalAppts - capacityRemaining) / totalAppts) * 100}%` }}
+                        ></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )
+              })}
             </div>
           </section>
 
@@ -96,15 +162,8 @@ export default function ReceptionistDashboard() {
               <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" /> Patients at Clinic
               </h2>
-              <div className="relative w-64">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Search patients..."
-                  className="pl-9 h-9 bg-white"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
+              <div className="relative w-64 text-sm font-medium">
+                (QR Checking-in users will populate here)
               </div>
             </div>
 

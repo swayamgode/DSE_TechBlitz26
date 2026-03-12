@@ -4,6 +4,7 @@ import { v } from "convex/values";
 export default defineSchema({
   users: defineTable({
     name: v.string(),
+    password: v.optional(v.string()), // Basic testing password
     role: v.union(v.literal("patient"), v.literal("doctor"), v.literal("receptionist")),
   }),
 

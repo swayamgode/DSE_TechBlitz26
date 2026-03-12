@@ -4,17 +4,44 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Activity, ArrowLeft, CalendarCheck, Clock } from "lucide-react";
+import { Activity, ArrowLeft, CalendarCheck, Clock, Loader2, Info } from "lucide-react";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function BookSlotPage() {
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<any>(null);
+  const [slotType, setSlotType] = useState<"regular" | "priority">("regular");
+  const [bookingLoading, setBookingLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
-  const mockSlots = [
-    { id: 1, time: "09:00 - 10:00 AM", available: 10, priority_space: 2 },
-    { id: 2, time: "10:00 - 11:00 AM", available: 2, priority_space: 0 },
-    { id: 3, time: "11:00 - 12:00 PM", available: 0, priority_space: 1 },
-    { id: 4, time: "12:00 - 01:00 PM", available: 8, priority_space: 2 },
-  ];
+  const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
+  const bookSlotMut = useMutation(api.appointments.bookSlot);
+
+  // We fetch user ID from localstorage for this simple project
+  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("healthdesk_userId") : null;
+
+  const handleBook = async () => {
+    if (!selectedSlot || !currentUserId) return;
+    setBookingLoading(true);
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      await bookSlotMut({
+        userId: currentUserId as any,
+        slotId: selectedSlot._id,
+        type: slotType,
+      });
+
+      setSuccessMsg(`Successfully booked ${slotType} slot for ${selectedSlot.startTime} - ${selectedSlot.endTime}.`);
+      setSelectedSlot(null);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Failed to book slot.");
+    } finally {
+      setBookingLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -35,47 +62,90 @@ export default function BookSlotPage() {
           <p className="text-slate-600">Choose an available time slot for today.</p>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4">
-          {mockSlots.map((slot) => (
-            <Card 
-              key={slot.id} 
-              className={`cursor-pointer transition-all ${
-                slot.available === 0 ? "opacity-50 grayscale bg-slate-100" :
-                selectedSlot === slot.id ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50/50" : "hover:border-blue-300"
-              }`}
-              onClick={() => slot.available > 0 && setSelectedSlot(slot.id)}
+        {errorMsg && (
+          <div className="p-4 bg-red-50 text-red-600 font-medium rounded-lg border border-red-100 flex items-center gap-2">
+            <Info className="w-5 h-5 shrink-0" /> {errorMsg}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-4 bg-emerald-50 text-emerald-700 font-medium rounded-lg border border-emerald-200">
+            {successMsg}
+          </div>
+        )}
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4 mb-6 shadow-sm">
+          <span className="text-sm font-medium text-slate-700">Booking Type:</span>
+          <div className="flex items-center bg-slate-100 p-1 rounded-lg">
+            <button 
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${slotType === "regular" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+              onClick={() => setSlotType("regular")}
             >
-              <CardHeader className="pb-2">
-                <CardTitle className="text-lg flex items-center justify-between">
-                  <span className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-slate-400" />
-                    {slot.time}
-                  </span>
-                </CardTitle>
-                <CardDescription>
-                  {slot.available === 0 ? "Fully Booked" : `${slot.available} regular slots open`}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-sm">
-                <div className="flex justify-between items-center text-slate-500">
-                  <span>Priority available: <span className="font-semibold text-slate-700">{slot.priority_space}</span></span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              Regular
+            </button>
+            <button 
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${slotType === "priority" ? "bg-amber-100 text-amber-800 shadow-sm" : "text-slate-500 hover:text-amber-700"}`}
+              onClick={() => setSlotType("priority")}
+            >
+              Priority / Emer.
+            </button>
+          </div>
         </div>
+
+        {slots.length === 0 ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {slots.map((slot: any) => {
+              // Determine availability based on selected type
+              const isAvailable = slotType === "regular" ? slot.availableRegular > 0 : slot.availablePriority > 0;
+              const isSelected = selectedSlot?._id === slot._id;
+
+              return (
+                <Card 
+                  key={slot._id} 
+                  className={`cursor-pointer transition-all ${
+                    !isAvailable ? "opacity-50 grayscale bg-slate-100 pointer-events-none" :
+                    isSelected ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50/50" : "hover:border-blue-300"
+                  }`}
+                  onClick={() => isAvailable && setSelectedSlot(slot)}
+                >
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center justify-between">
+                      <span className="flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-slate-400" />
+                        {slot.startTime}
+                      </span>
+                    </CardTitle>
+                    <CardDescription className="text-xs">
+                      {slot.endTime}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="text-sm border-t border-slate-100 pt-3">
+                    <div className="flex justify-between items-center text-slate-600">
+                      <span>{slotType === "regular" ? "Regular left:" : "Priority left:"}</span>
+                      <span className={`font-bold ${!isAvailable ? "text-red-500" : "text-slate-900"}`}>
+                        {slotType === "regular" ? slot.availableRegular : slot.availablePriority}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         <div className="flex justify-end pt-8">
           <Button 
             size="lg" 
             className="w-full sm:w-auto h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
-            disabled={!selectedSlot}
-            onClick={() => {
-              alert("Slot Booked! Don't forget to check-in when you arrive.");
-              // handle booking logic
-            }}
+            disabled={!selectedSlot || bookingLoading}
+            onClick={handleBook}
           >
-            <CalendarCheck className="w-5 h-5 mr-2" /> Confirm Booking
+            {bookingLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CalendarCheck className="w-5 h-5 mr-2" />} 
+            Confirm Booking
           </Button>
         </div>
       </main>

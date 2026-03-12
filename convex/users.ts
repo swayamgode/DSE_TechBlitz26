@@ -1,15 +1,43 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
-export const loginOrCreate = mutation({
+// Real-world apps should hash passwords (e.g. using bcrypt). 
+// For this simple prototype, we use plaintext matching for demonstration.
+export const register = mutation({
   args: {
     name: v.string(),
+    password: v.string(),
     role: v.union(v.literal("patient"), v.literal("doctor"), v.literal("receptionist")),
   },
   handler: async (ctx, args) => {
-    // Basic search to see if "user" already exists
-    // (This is a simplified mock-auth approach for your developer testing)
+    // Check if user already exists
     const existingUser = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("name"), args.name))
+      .first();
+
+    if (existingUser) {
+      throw new Error("User with this name already exists. Please login.");
+    }
+
+    const newUserId = await ctx.db.insert("users", {
+      name: args.name,
+      password: args.password,
+      role: args.role,
+    });
+    
+    return newUserId;
+  },
+});
+
+export const login = mutation({
+  args: {
+    name: v.string(),
+    password: v.string(),
+    role: v.union(v.literal("patient"), v.literal("doctor"), v.literal("receptionist")),
+  },
+  handler: async (ctx, args) => {
+    const user = await ctx.db
       .query("users")
       .filter((q) => q.and(
         q.eq(q.field("name"), args.name),
@@ -17,17 +45,15 @@ export const loginOrCreate = mutation({
       ))
       .first();
 
-    if (existingUser) {
-      return existingUser._id;
+    if (!user) {
+      throw new Error("User not found or role mismatch.");
     }
 
-    // Otherwise, create a new user in the DB
-    const newUserId = await ctx.db.insert("users", {
-      name: args.name,
-      role: args.role,
-    });
-    
-    return newUserId;
+    if (user.password !== args.password) {
+      throw new Error("Invalid password.");
+    }
+
+    return user._id;
   },
 });
 
