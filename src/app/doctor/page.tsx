@@ -5,13 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Activity, LogOut, CheckCircle2, User, Stethoscope, Clock, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 
 export default function DoctorDashboard() {
-  const mockQueue = [
-    { id: 1, name: "Alice Smith", type: "Priority", time: "10:05 AM", status: "Waiting" },
-    { id: 2, name: "Bob Johnson", type: "Regular", time: "10:12 AM", status: "Waiting" },
-    { id: 3, name: "Emily Brown", type: "Regular", time: "10:15 AM", status: "Waiting" },
-  ];
+  const liveQueue = useQuery(api.queue.getLiveQueue) || [];
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -42,7 +40,7 @@ export default function DoctorDashboard() {
               <Users className="text-slate-400 w-8 h-8" />
               <div>
                 <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Patients in Queue</p>
-                <p className="text-2xl font-bold text-slate-900 text-center">{mockQueue.length}</p>
+                <p className="text-2xl font-bold text-slate-900 text-center">{liveQueue.length}</p>
               </div>
             </Card>
           </div>
@@ -60,23 +58,29 @@ export default function DoctorDashboard() {
                 <CardDescription>Ready for consultation</CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
-                    <User className="w-8 h-8 text-slate-500" />
-                  </div>
-                  <div>
-                    <p className="text-xl font-bold text-slate-900">{mockQueue[0].name}</p>
-                    <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 rounded-full mt-1">
-                      {mockQueue[0].type}
-                    </Badge>
-                  </div>
-                </div>
-                <div className="flex text-sm text-slate-500 mt-2">
-                  <Clock className="w-4 h-4 mr-1" /> Arrived: {mockQueue[0].time}
-                </div>
+                {liveQueue.length > 0 ? (
+                  <>
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center">
+                        <User className="w-8 h-8 text-slate-500" />
+                      </div>
+                      <div>
+                        <p className="text-xl font-bold text-slate-900">{liveQueue[0].name}</p>
+                        <Badge variant="outline" className="border-amber-200 text-amber-700 bg-amber-50 rounded-full mt-1">
+                          {liveQueue[0].type}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="flex text-sm text-slate-500 mt-2">
+                      <Clock className="w-4 h-4 mr-1" /> Arrived: {liveQueue[0].time}
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-slate-500 text-center py-4">No patients waiting</div>
+                )}
               </CardContent>
               <CardFooter className="pt-2 border-t border-slate-50">
-                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-md">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-md" disabled={liveQueue.length === 0}>
                   Call Next Patient
                 </Button>
               </CardFooter>
@@ -86,10 +90,10 @@ export default function DoctorDashboard() {
           {/* Live Queue */}
           <section className="lg:col-span-2 space-y-6">
             <h2 className="text-xl font-semibold text-slate-900">Live FCFS Queue</h2>
-            <Card className="border-slate-200 overflow-hidden">
+            <Card className="border-slate-200 overflow-hidden bg-white">
               <div className="divide-y divide-slate-100">
-                {mockQueue.map((patient, idx) => (
-                  <div key={patient.id} className={`p-4 flex items-center justify-between transition-colors ${idx === 0 ? 'bg-blue-50/30' : 'hover:bg-slate-50'}`}>
+                {liveQueue.map((patient: any, idx: number) => (
+                  <div key={patient._id || idx} className={`p-4 flex items-center justify-between transition-colors ${idx === 0 ? 'bg-blue-50/30' : 'hover:bg-slate-50'}`}>
                     <div className="flex items-center gap-4">
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${idx === 0 ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
                         {idx + 1}
@@ -109,7 +113,7 @@ export default function DoctorDashboard() {
                   </div>
                 ))}
               </div>
-              {mockQueue.length === 0 && (
+              {liveQueue.length === 0 && (
                 <div className="p-8 text-center text-slate-500">
                   <Users className="w-12 h-12 mx-auto text-slate-300 mb-2" />
                   <p>Queue is empty. Waiting for patients to check in.</p>

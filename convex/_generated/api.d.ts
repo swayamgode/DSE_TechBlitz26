@@ -9,6 +9,7 @@
  */
 
 import type * as appointments from "../appointments.js";
+import type * as queue from "../queue.js";
 import type * as slots from "../slots.js";
 import type * as users from "../users.js";
 
@@ -20,6 +21,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   appointments: typeof appointments;
+  queue: typeof queue;
   slots: typeof slots;
   users: typeof users;
 }>;

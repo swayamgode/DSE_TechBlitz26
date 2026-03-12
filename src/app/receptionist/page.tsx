@@ -9,6 +9,7 @@ import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, Briefcas
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { QRCodeSVG } from "qrcode.react";
 
 export default function ReceptionistDashboard() {
   const [search, setSearch] = useState("");
@@ -19,11 +20,7 @@ export default function ReceptionistDashboard() {
   const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
   const createSlot = useMutation(api.slots.createSlot);
 
-  const mockAtClinic = [
-    { id: 1, name: "Alice Smith", type: "Priority", time: "10:05", status: "Waiting" },
-    { id: 2, name: "Bob Johnson", type: "Regular", time: "10:12", status: "Waiting" },
-    { id: 3, name: "Charlie Davis", type: "Regular", time: "09:50", status: "Consulting" },
-  ];
+  const liveQueue = useQuery(api.queue.getLiveQueue) || [];
 
   const handleCreateSlot = async () => {
     setCreating(true);
@@ -151,7 +148,7 @@ export default function ReceptionistDashboard() {
                       </div>
                     </CardContent>
                   </Card>
-                )
+                );
               })}
             </div>
           </section>
@@ -162,48 +159,60 @@ export default function ReceptionistDashboard() {
               <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" /> Patients at Clinic
               </h2>
-              <div className="relative w-64 text-sm font-medium">
-                (QR Checking-in users will populate here)
-              </div>
             </div>
-
-            <Card className="border-slate-200 overflow-hidden bg-white shadow-sm">
-              <div className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-6 grid grid-cols-4 border-b border-slate-100">
-                <div className="col-span-2">Patient</div>
-                <div>Status</div>
-                <div className="text-right">Action</div>
-              </div>
-              <div className="divide-y divide-slate-100">
-                {mockAtClinic.map((patient, idx) => (
-                  <div key={patient.id} className="p-4 px-6 grid grid-cols-4 items-center hover:bg-slate-50 transition-colors">
-                    <div className="col-span-2 flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
-                        {patient.name.charAt(0)}
-                      </div>
-                      <div>
-                        <p className="font-medium text-slate-900">{patient.name}</p>
-                        <div className="flex items-center text-xs text-slate-500 mt-0.5">
-                          <Badge variant="outline" className={`min-w-16 justify-center ${patient.type === 'Priority' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-slate-200 text-slate-600'} mr-2 rounded-full px-1.5 py-0 text-[10px]`}>
-                            {patient.type}
-                          </Badge>
-                          <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-500" /> Arr: {patient.time}
+            
+            <div className="grid md:grid-cols-3 gap-6">
+              {/* Actual Live Queue List */}
+              <Card className="border-slate-200 overflow-hidden bg-white shadow-sm md:col-span-2">
+                <div className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-6 grid grid-cols-4 border-b border-slate-100">
+                  <div className="col-span-2">Patient</div>
+                  <div>Status</div>
+                  <div className="text-right">Action</div>
+                </div>
+                <div className="divide-y divide-slate-100">
+                  {liveQueue.length === 0 ? (
+                    <div className="p-8 text-center text-slate-500 font-medium">No one is currently checked into the clinic queue.</div>
+                  ) : liveQueue.map((patient: any) => (
+                    <div key={patient._id} className="p-4 px-6 grid grid-cols-4 items-center hover:bg-slate-50 transition-colors">
+                      <div className="col-span-2 flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                          {patient.name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900">{patient.name}</p>
+                          <div className="flex items-center text-xs text-slate-500 mt-0.5">
+                            <Badge variant="outline" className={`min-w-16 justify-center ${patient.type === 'Priority' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-slate-200 text-slate-600'} mr-2 rounded-full px-1.5 py-0 text-[10px]`}>
+                              {patient.type}
+                            </Badge>
+                            <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-500" /> Arr: {patient.time}
+                          </div>
                         </div>
                       </div>
+                      <div>
+                        <Badge variant="secondary" className={`${patient.status === 'Consulting' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
+                          {patient.status}
+                        </Badge>
+                      </div>
+                      <div className="text-right">
+                        <Button variant="ghost" size="sm" className="text-slate-600 hover:text-red-600">
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
-                    <div>
-                      <Badge variant="secondary" className={`${patient.status === 'Consulting' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
-                        {patient.status}
-                      </Badge>
-                    </div>
-                    <div className="text-right">
-                      <Button variant="ghost" size="sm" className="text-slate-600 hover:text-red-600">
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </Card>
+                  ))}
+                </div>
+              </Card>
+
+              {/* Patient Scan Kiosk Display Card */}
+              <Card className="bg-white border-2 border-slate-200 text-center flex flex-col items-center justify-center p-6 space-y-4">
+                 <h3 className="font-bold text-slate-900 border-b pb-2 mb-2 w-full">Scan to Check-in</h3>
+                 <div className="bg-slate-50 p-4 rounded-xl border-4 border-slate-200">
+                   {/* In production, dynamically generate this code to the current window location host. Assumed network mobile IP test */}
+                   <QRCodeSVG value={`http://10.254.141.151:3000/patient/checkin`} size={150} />
+                 </div>
+                 <p className="text-xs text-slate-500">Patients MUST be connected to the clinic's network (10.254.141.151) on their phone and log in to scan successfully.</p>
+              </Card>
+            </div>
           </section>
         </div>
       </main>

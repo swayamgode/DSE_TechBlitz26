@@ -1,15 +1,50 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Activity, ArrowLeft, Clock, Users, Coffee } from "lucide-react";
+import { Activity, ArrowLeft, Clock, Users, Coffee, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function QueueStatusPage() {
-  const currentPosition = 3;
-  const totalInQueue = 8;
-  const estimatedWait = currentPosition * 10; // 10 mins per patient
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setUserId(localStorage.getItem("healthdesk_userId"));
+  }, []);
+
+  const queueData = useQuery(api.queue.getQueuePosition, userId ? { userId: userId as any } : "skip");
+
+  if (queueData === undefined) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 space-y-4">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <p className="text-slate-500 font-medium">Loading queue status...</p>
+      </div>
+    );
+  }
+
+  if (queueData === null) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 space-y-4 text-center">
+        <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-2">
+            <Users className="w-8 h-8 text-slate-400" />
+        </div>
+        <h2 className="text-xl font-bold text-slate-800">Not in Queue</h2>
+        <p className="text-slate-500 font-medium max-w-sm">You haven't checked into the clinic yet today. Please scan the QR code at the front desk when you arrive.</p>
+        <Link href="/patient" className="mt-4">
+           <Button className="bg-blue-600 hover:bg-blue-700 text-white">Back to Dashboard</Button>
+        </Link>
+      </div>
+    );
+  }
+
+  const currentPosition = queueData.position;
+  const totalInQueue = queueData.totalInQueue;
+  const estimatedWait = queueData.estimatedWaitTime;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -68,10 +103,6 @@ export default function QueueStatusPage() {
                 </div>
               </div>
             </div>
-            
-            <Button variant="outline" className="w-full text-slate-700 bg-white border-slate-200">
-              Refresh Status
-            </Button>
           </Card>
         </div>
         

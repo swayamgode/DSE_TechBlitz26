@@ -1,22 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Activity, ArrowLeft, QrCodeIcon, Loader2 } from "lucide-react";
+import { Activity, ArrowLeft, QrCodeIcon, Loader2, Info } from "lucide-react";
+import { useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 export default function CheckinPage() {
   const [scanning, setScanning] = useState(false);
   const [checkinSuccess, setCheckinSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [userId, setUserId] = useState<string | null>(null);
 
-  const handleScan = () => {
+  const checkInMut = useMutation(api.queue.checkInPatient);
+
+  useEffect(() => {
+    setUserId(localStorage.getItem("healthdesk_userId"));
+  }, []);
+
+  const handleScan = async () => {
+    if (!userId) {
+      setErrorMsg("User ID not found, please log in again.");
+      return;
+    }
+    
     setScanning(true);
-    // Simulate a fake scan 
-    setTimeout(() => {
-      setScanning(false);
-      setCheckinSuccess(true);
-    }, 2000);
+    setErrorMsg("");
+    
+    // Simulate a brief QR "scan" delay
+    setTimeout(async () => {
+      try {
+        await checkInMut({ userId: userId as any });
+        setCheckinSuccess(true);
+      } catch (err: any) {
+        setErrorMsg(err.message || "Failed to check-in. Do you have an appointment right now?");
+      } finally {
+        setScanning(false);
+      }
+    }, 1200);
   };
 
   return (
@@ -41,6 +64,11 @@ export default function CheckinPage() {
                 Scan the QR code at the reception desk to enter the live queue.
               </CardDescription>
             </CardHeader>
+            {errorMsg && (
+              <div className="mx-6 p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-100 flex items-center gap-2">
+                <Info className="w-4 h-4 shrink-0" /> {errorMsg}
+              </div>
+            )}
             <CardContent className="flex flex-col items-center justify-center pt-8">
               <div className="relative w-48 h-48 border-4 border-dashed border-slate-300 rounded-3xl flex items-center justify-center">
                 {scanning ? (
