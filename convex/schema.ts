@@ -30,4 +30,35 @@ export default defineSchema({
     arrivalTime: v.string(), // ISODate string
     priority: v.boolean(),
   }),
+
+  medicalInfo: defineTable({
+    patientId: v.id("users"),
+    age: v.optional(v.number()),
+    gender: v.optional(v.string()),
+    bloodType: v.optional(v.string()),
+    isDiabetic: v.boolean(),
+    isHypertensive: v.boolean(),
+    hasHeartDisease: v.boolean(),
+    hasAsthma: v.boolean(),
+    conditions: v.optional(v.string()),   // Comma-separated or freeform
+    allergies: v.optional(v.string()),
+    currentMedications: v.optional(v.string()),
+    notes: v.optional(v.string()),        // Doctor / patient free notes
+    emergencyContact: v.optional(v.string()),
+    
+    // Blockchain / Security Fields
+    checksum: v.optional(v.string()),     // SHA-256 hash of the record content
+    lastVerified: v.optional(v.string()), // ISO Timestamp
+    version: v.number(),                  // For audit trailing
+  }).index("by_patient", ["patientId"]),
+
+  // Immutable Ledger (Blockchain History)
+  medicalAudit: defineTable({
+    patientId: v.id("users"),
+    timestamp: v.string(),
+    checksum: v.string(),
+    version: v.number(),
+    data: v.string(),                     // JSON string of the medical state
+    blockIndex: v.number(),               // Sequential block number
+  }).index("by_patient", ["patientId"]),
 });

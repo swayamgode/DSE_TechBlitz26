@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, BriefcaseMedical, Plus, Loader2 } from "lucide-react";
+import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, BriefcaseMedical, Plus, Loader2, Heart, Users, X, RefreshCw } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -70,112 +70,114 @@ export default function ReceptionistDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white">
       {/* Navbar */}
-      <header className="px-6 h-16 flex items-center justify-between border-b bg-white top-0 z-50">
-        <div className="flex items-center gap-2">
-          <Activity className="w-6 h-6 text-blue-600" />
-          <span className="text-xl font-bold tracking-tight text-slate-900">HealthDesk</span>
+      <header className="px-6 h-24 flex items-center justify-between sticky top-0 bg-white z-50">
+        <div className="flex items-center gap-2 group cursor-pointer">
+          <div className="p-1.5 bg-black rounded-lg transition-transform group-hover:-rotate-3">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-black">HealthDesk</span>
         </div>
-        <nav className="text-sm font-medium text-slate-600 flex items-center gap-6">
-          <span className="text-amber-900 bg-amber-50 px-3 py-1 rounded-full text-xs font-bold border border-amber-200 flex items-center gap-1">
-            <BriefcaseMedical className="w-3 h-3" /> Reception
+        <nav className="text-[10px] font-black uppercase tracking-widest text-zinc-400 flex items-center gap-8">
+          <span className="text-black bg-zinc-100 px-4 py-1.5 rounded-full flex items-center gap-2 border border-zinc-200">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> RECEPTION DESK
           </span>
-          <Link href="/login" className="flex items-center gap-2 hover:text-red-600 transition-colors">
+          <Link href="/login" className="flex items-center gap-2 hover:text-black transition-all">
             <LogOut className="w-4 h-4" /> Logout
           </Link>
         </nav>
       </header>
 
-      <main className="flex-1 p-6 lg:p-12 max-w-7xl mx-auto w-full space-y-8">
-        <div className="flex justify-between items-end mb-6">
+      <main className="flex-1 p-6 lg:p-12 max-w-[90rem] mx-auto w-full space-y-12">
+        <div className="flex justify-between items-end border-b border-zinc-100 pb-10">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900 mb-2">Receptionist Dashboard</h1>
-            <p className="text-slate-600">Managing Front Desk & Queues</p>
+            <h1 className="text-5xl font-bold tracking-tighter text-black mb-3">Main Control</h1>
+            <p className="text-zinc-400 font-bold uppercase text-[10px] tracking-[0.2em]">Operations & Queue Management</p>
           </div>
           <div className="flex gap-4">
-            <Button className="bg-amber-600 hover:bg-amber-700">
-              <UserPlus className="w-4 h-4 mr-2" /> Walk-in
+            <Button className="neo-button h-14 px-8 text-sm">
+              <UserPlus className="w-5 h-5 mr-3" /> Register Walk-in
             </Button>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Quick Actions / Slots */}
-          <section className="lg:col-span-1 space-y-6">
+        <div className="grid lg:grid-cols-12 gap-12">
+          {/* Slots / Schedule */}
+          <section className="lg:col-span-4 space-y-8 animate-reveal">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-600" /> Today&apos;s Slots
+              <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                <Clock className="w-6 h-6" /> Registration Slots
               </h2>
-              <Button variant="outline" size="sm" onClick={() => setShowCreate(!showCreate)} className="h-8 shadow-sm">
-                <Plus className="w-4 h-4 mr-1 text-slate-400" /> New
+              <Button variant="ghost" size="sm" onClick={() => setShowCreate(!showCreate)} className="h-10 w-10 p-0 rounded-full border border-zinc-200 hover:bg-black hover:text-white transition-all">
+                <Plus className={`w-5 h-5 transition-transform duration-300 ${showCreate ? 'rotate-45' : ''}`} />
               </Button>
             </div>
 
             {showCreate && (
-              <Card className="bg-white border-blue-200 shadow-sm">
-                <CardHeader className="py-4 border-b border-slate-100 bg-slate-50">
-                  <CardTitle className="text-sm font-semibold text-slate-700">Create Custom Slot</CardTitle>
+              <Card className="neo-card animate-reveal overflow-hidden shadow-none border-zinc-200">
+                <CardHeader className="py-5 bg-zinc-50 border-b border-zinc-200">
+                  <CardTitle className="text-[10px] font-black uppercase tracking-[0.2em]">New Operational Slot</CardTitle>
                 </CardHeader>
-                <CardContent className="pt-4 space-y-3">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-xs text-slate-500 font-medium tracking-wide">Start Time</label>
+                <CardContent className="pt-6 space-y-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-zinc-400">Start</label>
                       <Select value={startTime} onValueChange={(v) => v && setStartTime(v)}>
-                        <SelectTrigger className="h-9 text-sm">
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-black">
                           {TIME_OPTIONS.map((t) => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                            <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-slate-500 font-medium tracking-wide">End Time</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-zinc-400">End</label>
                       <Select value={endTime} onValueChange={(v) => v && setEndTime(v)}>
-                        <SelectTrigger className="h-9 text-sm">
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-black">
                           {TIME_OPTIONS.map((t) => (
-                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                            <SelectItem key={t} value={t} className="font-bold">{t}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <label className="text-xs text-emerald-600 font-medium tracking-wide">Regular Capacity</label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-zinc-400">Reg Cap</label>
                       <Select value={regCapacity} onValueChange={(v) => v && setRegCapacity(v)}>
-                        <SelectTrigger className="h-9 text-sm">
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-black">
                           {[1,2,3,4,5,6,7,8,9,10,12,15,20].map((n) => (
-                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            <SelectItem key={n} value={String(n)} className="font-bold">{n}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-amber-600 font-medium tracking-wide">Priority Capacity</label>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-bold uppercase text-zinc-400">Pri Cap</label>
                       <Select value={prioCapacity} onValueChange={(v) => v && setPrioCapacity(v)}>
-                        <SelectTrigger className="h-9 text-sm">
+                        <SelectTrigger className="h-12 rounded-xl border-zinc-200 font-bold">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="rounded-xl border-black">
                           {[0,1,2,3,4,5].map((n) => (
-                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                            <SelectItem key={n} value={String(n)} className="font-bold">{n}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
-                  <Button className="w-full mt-2 h-9 bg-blue-600 hover:bg-blue-700" onClick={handleCreateSlot} disabled={creating}>
-                    {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Slot"}
+                  <Button className="w-full h-14 bg-black text-white hover:bg-black/90 font-black rounded-xl" onClick={handleCreateSlot} disabled={creating}>
+                    {creating ? <Loader2 className="w-5 h-5 animate-spin" /> : "Publish Slot"}
                   </Button>
                 </CardContent>
               </Card>
@@ -183,34 +185,39 @@ export default function ReceptionistDashboard() {
 
             <div className="space-y-4">
               {slots.length === 0 ? (
-                <div className="text-center py-8 text-slate-400 text-sm font-medium">No slots created yet. Click &quot;New&quot; to add one.</div>
-              ) : slots.map((slot: any) => {
+                <div className="text-center py-20 rounded-3xl border-2 border-dashed border-zinc-100 text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em]">
+                  Awaiting Schedule Data
+                </div>
+              ) : slots.map((slot: any, idx: number) => {
                 const totalAppts = slot.regularSlots + slot.prioritySlots;
                 const capacityRemaining = slot.availableRegular + slot.availablePriority;
                 const isFull = capacityRemaining === 0;
 
                 return (
-                  <Card key={slot._id} className={`border shadow-none ${isFull ? 'bg-slate-50/50 border-slate-200' : 'bg-white border-blue-100 hover:border-blue-300'} transition-colors`}>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-md flex justify-between">
-                        {slot.startTime} - {slot.endTime}
-                        {isFull ? (
-                          <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200">Full</Badge>
-                        ) : (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200">
-                            {capacityRemaining} left
-                          </Badge>
-                        )}
-                      </CardTitle>
+                  <Card key={slot._id} className={`neo-card shadow-none transition-all group ${isFull ? 'bg-zinc-50 border-zinc-200 grayscale shadow-none' : 'hover:-translate-y-1'} animate-reveal`} style={{ animationDelay: `${idx * 50}ms` }}>
+                    <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                      <div>
+                        <CardTitle className="text-xl font-black">
+                          {slot.startTime}
+                        </CardTitle>
+                        <p className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">{slot.endTime}</p>
+                      </div>
+                      {isFull ? (
+                        <div className="px-3 py-1 bg-black text-white text-[9px] font-black uppercase rounded-full">Full</div>
+                      ) : (
+                        <div className="px-3 py-1 border border-black text-black text-[9px] font-black uppercase rounded-full">
+                          {capacityRemaining} Left
+                        </div>
+                      )}
                     </CardHeader>
-                    <CardContent className="text-sm text-slate-500 pb-4">
-                      <div className="flex justify-between mb-1">
+                    <CardContent className="pb-5 space-y-3">
+                      <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest">
                         <span>Reg: {slot.availableRegular}/{slot.regularSlots}</span>
                         <span>Pri: {slot.availablePriority}/{slot.prioritySlots}</span>
                       </div>
-                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
+                      <div className="w-full bg-zinc-100 h-2 rounded-full overflow-hidden border border-zinc-200">
                         <div
-                          className={`h-full ${isFull ? 'bg-red-400' : 'bg-blue-500'}`}
+                          className={`h-full transition-all duration-1000 ${isFull ? 'bg-zinc-400' : 'bg-black'}`}
                           style={{ width: `${((totalAppts - capacityRemaining) / totalAppts) * 100}%` }}
                         ></div>
                       </div>
@@ -221,52 +228,64 @@ export default function ReceptionistDashboard() {
             </div>
           </section>
 
-          {/* Active Queue / Clinic Management */}
-          <section className="lg:col-span-2 space-y-6">
+          {/* Queue / Kiosk */}
+          <section className="lg:col-span-8 space-y-8 animate-reveal" style={{ animationDelay: '100ms' }}>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" /> Patients at Clinic
+              <h2 className="text-2xl font-black tracking-tight flex items-center gap-3">
+                <Users className="w-6 h-6" /> Live Clinic Arrival Queue
               </h2>
-              <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 px-3 py-1">
-                {liveQueue.length} in Queue
-              </Badge>
+              <div className="flex items-center gap-2">
+                 <div className="px-4 py-1.5 bg-black text-white rounded-full text-[10px] font-black uppercase tracking-widest">
+                   {liveQueue.length} Present
+                 </div>
+              </div>
             </div>
 
-            <div className="grid md:grid-cols-3 gap-6">
-              {/* Actual Live Queue List */}
-              <Card className="border-slate-200 overflow-hidden bg-white shadow-sm md:col-span-2">
-                <div className="bg-slate-50 text-xs font-semibold text-slate-500 uppercase tracking-wider py-3 px-6 grid grid-cols-4 border-b border-slate-100">
-                  <div className="col-span-2">Patient</div>
+            <div className="grid md:grid-cols-12 gap-10">
+              {/* Queue List */}
+              <Card className="md:col-span-12 lg:col-span-8 neo-card shadow-none border-zinc-200 overflow-hidden">
+                <div className="bg-zinc-50 border-b border-zinc-200 text-[9px] font-black text-zinc-400 uppercase tracking-[0.2em] py-5 px-8 grid grid-cols-4">
+                  <div className="col-span-2">Patient Details</div>
                   <div>Status</div>
                   <div className="text-right">Action</div>
                 </div>
-                <div className="divide-y divide-slate-100">
+                <div className="divide-y divide-zinc-100">
                   {liveQueue.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 font-medium">No one is currently checked into the clinic queue.</div>
-                  ) : liveQueue.map((patient: any) => (
-                    <div key={patient._id} className="p-4 px-6 grid grid-cols-4 items-center hover:bg-slate-50 transition-colors">
-                      <div className="col-span-2 flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
+                    <div className="p-32 text-center text-zinc-300">
+                       <Users className="w-12 h-12 mx-auto mb-4 opacity-20" />
+                       <p className="text-[10px] font-black uppercase tracking-[0.2em]">Empty Queue</p>
+                    </div>
+                  ) : liveQueue.map((patient: any, idx: number) => (
+                    <div key={patient._id} className="p-6 px-8 grid grid-cols-4 items-center group hover:bg-zinc-50 transition-all font-bold animate-reveal" style={{ animationDelay: `${idx * 40}ms` }}>
+                      <div className="col-span-2 flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl border-2 border-black flex items-center justify-center font-black text-xl group-hover:bg-black group-hover:text-white transition-all">
                           {patient.name.charAt(0)}
                         </div>
                         <div>
-                          <p className="font-medium text-slate-900">{patient.name}</p>
-                          <div className="flex items-center text-xs text-slate-500 mt-0.5">
-                            <Badge variant="outline" className={`min-w-16 justify-center ${patient.type === 'Priority' ? 'border-amber-200 text-amber-700 bg-amber-50' : 'border-slate-200 text-slate-600'} mr-2 rounded-full px-1.5 py-0 text-[10px]`}>
+                          <p className="text-lg tracking-tight flex items-center gap-2">
+                            {patient.name}
+                            {patient.medicalInfo && (
+                              <Heart className="w-3.5 h-3.5 fill-black" />
+                            )}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${patient.type === 'Priority' ? 'bg-black text-white border-black' : 'border-zinc-200 text-zinc-400'}`}>
                               {patient.type}
-                            </Badge>
-                            <CheckCircle2 className="w-3 h-3 mr-1 text-emerald-500" /> Arr: {patient.time}
+                            </span>
+                            <span className="text-[9px] font-bold text-zinc-300 flex items-center gap-1 uppercase">
+                              <Clock className="w-3 h-3" /> {patient.time}
+                            </span>
                           </div>
                         </div>
                       </div>
                       <div>
-                        <Badge variant="secondary" className={`${patient.status === 'Consulting' ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-700'}`}>
+                        <div className={`inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase border ${patient.status === 'Consulting' ? 'bg-emerald-50 text-emerald-700 border-emerald-200 animate-pulse' : 'bg-white text-zinc-500 border-zinc-200'}`}>
                           {patient.status}
-                        </Badge>
+                        </div>
                       </div>
                       <div className="text-right">
-                        <Button variant="ghost" size="sm" className="text-slate-600 hover:text-red-600">
-                          Cancel
+                        <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-full hover:bg-black hover:text-white border border-transparent hover:border-black transition-all">
+                          <X className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
@@ -274,34 +293,43 @@ export default function ReceptionistDashboard() {
                 </div>
               </Card>
 
-              {/* Patient Scan Kiosk Display Card */}
-              <Card className="bg-white border-2 border-blue-200 text-center flex flex-col items-center justify-center p-5 space-y-3">
-                <h3 className="font-bold text-slate-900 border-b pb-2 w-full">Patient Check-in</h3>
+              {/* Scan Card */}
+              <Card className="md:col-span-12 lg:col-span-4 neo-card shadow-none border-black p-8 flex flex-col items-center justify-between text-center space-y-10 group">
+                <div className="space-y-1">
+                   <h3 className="font-black text-2xl tracking-tighter">Self-Check-in</h3>
+                   <div className="h-1.5 w-8 bg-black mx-auto rounded-full" />
+                </div>
 
-                {/* PIN — primary method, works over HTTP */}
-                <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1">
-                  <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Today&apos;s Check-in PIN</p>
-                  <p className="text-4xl font-black tracking-[0.25em] text-blue-900 font-mono">
+                <div className="w-full bg-black text-white rounded-3xl p-8 space-y-4 shadow-xl transition-transform hover:-translate-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Security PIN</p>
+                  <p className="text-6xl font-black tracking-[0.2em] font-mono">
                     {sessionPin || "------"}
                   </p>
-                  <p className="text-[10px] text-blue-600">Patient types this code on their phone</p>
                   <button
                     onClick={refreshPin}
-                    className="text-[10px] text-blue-500 underline hover:text-blue-700 mt-1"
+                    className="flex items-center gap-2 mx-auto pt-4 text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 hover:text-white transition-colors"
                   >
-                    Generate new PIN
+                    <RefreshCw className="w-3 h-3" /> Regenerate
                   </button>
                 </div>
 
-                {/* QR — optional, only works over HTTPS */}
-                <div className="w-full space-y-2">
-                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Or scan QR (HTTPS only)</p>
-                  <div className="flex justify-center bg-slate-50 p-3 rounded-xl border border-slate-200">
-                    <QRCodeSVG value={`HEALTHDESK_PIN:${sessionPin}`} size={110} />
+                <div className="w-full space-y-6">
+                  <div className="flex justify-center p-6 rounded-3xl border-2 border-zinc-100 bg-zinc-50/50 group-hover:border-black transition-all duration-500">
+                    <QRCodeSVG 
+                      value={typeof window !== 'undefined' ? `${window.location.origin}/patient/checkin?pin=${sessionPin}` : ""} 
+                      size={180}
+                      level="H"
+                      includeMargin={false}
+                    />
+                  </div>
+                  <div className="space-y-3">
+                     <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Connection Diagnostics</p>
+                     <div className="bg-zinc-100 p-4 rounded-2xl border border-zinc-200 space-y-2">
+                        <p className="text-[9px] font-bold text-zinc-500 break-all select-all">IP: 192.168.26.197</p>
+                        <p className="text-[9px] font-bold text-zinc-500 break-all select-all lowercase font-mono">https://giant-walls-go.loca.lt</p>
+                     </div>
                   </div>
                 </div>
-
-                <p className="text-[10px] text-slate-400">Open HealthDesk → Check-in → enter PIN</p>
               </Card>
             </div>
           </section>

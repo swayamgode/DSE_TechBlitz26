@@ -1,28 +1,34 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Activity, ArrowRight, CalendarCheck, Clock, ShieldCheck, Users } from "lucide-react";
+import { Activity, ArrowRight, CalendarCheck, Clock, ShieldCheck, Users, Zap, Search, Layout } from "lucide-react";
 
 export default function LandingPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-white font-sans selection:bg-black selection:text-white">
       {/* Navbar */}
-      <header className="px-6 lg:px-14 h-20 flex items-center justify-between border-b border-slate-200/60 bg-white/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="flex items-center gap-2">
-          <Activity className="w-8 h-8 text-blue-600" />
-          <span className="text-xl font-bold tracking-tight text-slate-900">HealthDesk</span>
+      <header className="px-6 lg:px-20 h-24 flex items-center justify-between sticky top-0 bg-white z-50">
+        <div className="flex items-center gap-2 group cursor-pointer">
+          <div className="p-1 bg-black rounded-lg">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-2xl font-black tracking-tighter text-zinc-900">Doctors</span>
         </div>
-        <nav className="hidden md:flex gap-8 text-sm font-medium text-slate-600">
-          <Link href="#features" className="hover:text-blue-600 transition-colors">Features</Link>
-          <Link href="#how-it-works" className="hover:text-blue-600 transition-colors">How it Works</Link>
-          <Link href="#testimonials" className="hover:text-blue-600 transition-colors">Testimonials</Link>
+        
+        <nav className="hidden lg:flex items-center gap-8">
+          <Link href="/" className="text-[13px] font-bold text-black hover:text-zinc-600 transition-colors">Home</Link>
+          <Link href="#" className="text-[13px] font-bold text-black hover:text-zinc-600 transition-colors">Doctors</Link>
+          <Link href="#" className="text-[13px] font-bold text-black hover:text-zinc-600 transition-colors">Appointments</Link>
+          <Link href="#" className="text-[13px] font-bold text-black hover:text-zinc-600 transition-colors">Hospitals</Link>
+          <Link href="#" className="text-[13px] font-bold text-black hover:text-zinc-600 transition-colors">About</Link>
         </nav>
+
         <div className="flex items-center gap-4">
           <Link href="/login">
-            <Button variant="ghost" className="hidden sm:flex font-medium">Log in</Button>
+            <Button variant="ghost" className="text-[13px] font-bold text-black hover:bg-zinc-50">Login</Button>
           </Link>
           <Link href="/login">
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white font-medium shadow-md hover:shadow-lg transition-all">
-              Get Started <ArrowRight className="ml-2 w-4 h-4" />
+            <Button className="bg-black text-white hover:bg-zinc-800 font-bold px-6 h-11 rounded-xl text-[13px] transition-all active:scale-95 shadow-sm">
+              Get Appointment
             </Button>
           </Link>
         </div>
@@ -30,95 +36,107 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative pt-32 pb-40 px-6 lg:px-14 overflow-hidden">
-          {/* Background decorations */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl">
-            <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-            <div className="absolute top-20 right-10 w-72 h-72 bg-emerald-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-            <div className="absolute -bottom-8 left-1/3 w-72 h-72 bg-indigo-400 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-4000"></div>
+        <section className="relative px-6 lg:px-20 pt-20 pb-0 max-w-7xl mx-auto flex flex-col items-center text-center">
+          <h1 className="text-4xl lg:text-[3.2rem] font-bold tracking-tight text-black leading-[1.15] mb-6 max-w-4xl">
+            Book smarter. Skip the waiting room.<br/>
+            Your doctor, scheduled instantly.
+          </h1>
+
+          <p className="max-w-2xl text-[14px] text-zinc-500 font-medium leading-relaxed mb-8">
+            Find verified doctors, book time slots, and manage appointments in seconnds.
+          </p>
+
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-20">
+            <Link href="/login">
+              <Button className="bg-black text-white hover:bg-zinc-800 font-bold px-10 h-14 rounded-lg text-md shadow-sm">
+                Book Appointment
+              </Button>
+            </Link>
+            <Link href="/login">
+              <Button variant="outline" className="border-zinc-200 border text-black hover:bg-zinc-50 font-bold px-10 h-14 rounded-lg text-md">
+                Find Doctors
+              </Button>
+            </Link>
           </div>
 
-          <div className="relative max-w-5xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-sm font-medium text-blue-800">
-              <span className="flex w-2 h-2 rounded-full bg-blue-600 mr-2"></span>
-              Smart Queue Management
-            </div>
-            <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight text-slate-900 leading-[1.1]">
-              Modernizing <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">Patient Flow</span> <br className="hidden md:block" /> for Clinics.
-            </h1>
-            <p className="max-w-2xl mx-auto text-xl text-slate-600 leading-relaxed">
-              HealthDesk is an intelligent appointment and physical check-in system. Ensure zero waiting room chaos with live FCFS queues and smart no-show handling.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-              <Link href="/login">
-                <Button size="lg" className="w-full sm:w-auto h-14 px-8 text-base bg-blue-600 hover:bg-blue-700 shadow-xl shadow-blue-600/20 text-white rounded-full transition-all">
-                  Book an Appointment
-                </Button>
-              </Link>
-              <Link href="/login">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-base bg-white border-slate-200 text-slate-700 hover:bg-slate-50 rounded-full">
-                  Clinic Access
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
-
-        {/* Features Section */}
-        <section id="features" className="py-24 bg-white px-6 lg:px-14 border-t border-slate-100">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16 space-y-4">
-              <h2 className="text-3xl md:text-4xl font-bold text-slate-900">Why choose HealthDesk?</h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto">Designed to make hospital and clinic visits seamless for both patients and healthcare providers.</p>
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-8">
-              {/* Feature 1 */}
-              <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow duration-300">
-                <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-6">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Live FCFS Queues</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Booking a slot is just step one. Physical check-in via QR code places patients in a truly fair, live first-come-first-serve queue.
-                </p>
-              </div>
-
-              {/* Feature 2 */}
-              <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow duration-300">
-                <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mb-6">
-                  <CalendarCheck className="w-6 h-6 text-emerald-600" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Smart No-Show Handling</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Automatic reminders via SMS/WhatsApp. If a patient doesn't arrive by the deadline, their slot automatically frees up for walk-ins.
-                </p>
-              </div>
-
-              {/* Feature 3 */}
-              <div className="p-8 rounded-2xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow duration-300">
-                <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-6">
-                  <ShieldCheck className="w-6 h-6 text-purple-600" />
-                </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-3">Priority Slots</h3>
-                <p className="text-slate-600 leading-relaxed">
-                  Designated emergency and priority slots every hour to handle urgent cases without disrupting the regular flow.
-                </p>
-              </div>
-            </div>
+          {/* Hero Illustrations - Background removed versions */}
+          <div className="w-full flex items-end justify-between px-4 mt-2 overflow-hidden">
+             <div className="w-[42%]">
+                <img 
+                  src="/6 copy.png" 
+                  alt="Doctor Illustration" 
+                  className="w-full h-auto object-contain animate-reveal" 
+                />
+             </div>
+             <div className="w-[42%]">
+                <img 
+                  src="/7 copy.png" 
+                  alt="Patient Illustration" 
+                  className="w-full h-auto object-contain animate-reveal" 
+                  style={{ animationDelay: '150ms' }}
+                />
+             </div>
           </div>
         </section>
 
+        {/* Toolkit Section */}
+        <section className="bg-zinc-50/30 border-t border-zinc-100 py-32 px-6 lg:px-20">
+           <div className="max-w-6xl mx-auto">
+              <div className="inline-block px-4 py-1 bg-black text-white rounded-full text-[9px] font-black uppercase tracking-[0.2em] mb-6 shadow-sm">
+                 The Toolkit
+              </div>
+              <h2 className="text-4xl lg:text-5xl font-bold tracking-tight text-black mb-20 max-w-xl leading-[1.1]">
+                 Tools that move as fast as you do.
+              </h2>
+
+              <div className="grid md:grid-cols-3 gap-16">
+                 <div className="space-y-6 group">
+                    <div className="w-12 h-12 rounded-2xl border-2 border-zinc-100 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                       <Zap className="w-5 h-5 text-black group-hover:text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold tracking-tight">Instant Check-in</h3>
+                    <p className="text-zinc-500 font-medium leading-relaxed">
+                       Patients arrive, scan, and join the queue in 2 seconds. No more spreadsheets or manual entries.
+                    </p>
+                 </div>
+                 <div className="space-y-6 group">
+                    <div className="w-12 h-12 rounded-2xl border-2 border-zinc-100 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                       <Layout className="w-5 h-5 text-black group-hover:text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold tracking-tight">Queue Transparency</h3>
+                    <p className="text-zinc-500 font-medium leading-relaxed">
+                       Patients track their position live on their phones. Reduces anxiety and receptionist overhead.
+                    </p>
+                 </div>
+                 <div className="space-y-6 group">
+                    <div className="w-12 h-12 rounded-2xl border-2 border-zinc-100 flex items-center justify-center group-hover:bg-black group-hover:border-black transition-all">
+                       <Search className="w-5 h-5 text-black group-hover:text-white" />
+                    </div>
+                    <h3 className="text-2xl font-bold tracking-tight">Smart Discovery</h3>
+                    <p className="text-zinc-500 font-medium leading-relaxed">
+                       Easily find and book slots that fit your schedule. Real-time availability at your fingertips.
+                    </p>
+                 </div>
+              </div>
+           </div>
+        </section>
       </main>
 
       {/* Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-12 px-6 lg:px-14">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="px-6 lg:px-20 py-20 border-t border-zinc-100 bg-white">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-10">
           <div className="flex items-center gap-2">
-            <Activity className="w-6 h-6 text-blue-500" />
-            <span className="text-xl font-bold tracking-tight text-white">HealthDesk</span>
+            <div className="p-1 bg-black rounded">
+              <Activity className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-black tracking-tighter text-black">HealthDesk</span>
           </div>
-          <p className="text-sm">© 2026 HealthDesk Inc. All rights reserved.</p>
+          <div className="flex gap-10 text-sm font-bold text-zinc-400">
+             <Link href="#" className="hover:text-black">Privacy</Link>
+             <Link href="#" className="hover:text-black">Terms</Link>
+             <Link href="#" className="hover:text-black">Feedback</Link>
+          </div>
+          <p className="text-xs font-bold text-zinc-300">© 2026 HealthDesk Inc.</p>
         </div>
       </footer>
     </div>

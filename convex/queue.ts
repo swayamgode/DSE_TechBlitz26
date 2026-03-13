@@ -104,6 +104,12 @@ export const getLiveQueue = query({
     const mapped = await Promise.all(allQueueEntries.map(async (q) => {
       const patient = await ctx.db.get(q.patientId);
       
+      // Fetch medical info for the doctor's view
+      const medInfo = await ctx.db
+        .query("medicalInfo")
+        .withIndex("by_patient", (qi) => qi.eq("patientId", q.patientId))
+        .first();
+
       const timeStr = new Date(q.arrivalTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
       
       return {
@@ -114,7 +120,8 @@ export const getLiveQueue = query({
         time: timeStr,
         rawTime: q.arrivalTime,
         priority: q.priority,
-        status: "Waiting" // Simple mock status for now
+        status: "Waiting",
+        medicalInfo: medInfo ?? null,
       };
     }));
     

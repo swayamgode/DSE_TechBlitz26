@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import {
   Activity, ArrowLeft, Loader2, Info, CheckCircle,
-  KeyRound, Camera, X, RefreshCw,
+  KeyRound, Camera, X, RefreshCw, ShieldCheck,
 } from "lucide-react";
 import { useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
@@ -42,7 +42,13 @@ function CheckinContent() {
     setUserId(storedId);
     // Camera only works on HTTPS or localhost
     setIsSecure(location.protocol === "https:" || location.hostname === "localhost");
-  }, []);
+    
+    // Auto-fill PIN from URL if present
+    const urlPin = searchParams.get("pin");
+    if (urlPin && /^\d{6}$/.test(urlPin)) {
+      setPin(urlPin);
+    }
+  }, [searchParams]);
 
   // ── Check-in action ──────────────────────────────────────────────────────
   const performCheckIn = async () => {
@@ -155,105 +161,80 @@ function CheckinContent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
-      <header className="px-6 h-16 flex items-center border-b bg-white top-0 z-50">
-        <Link href="/patient" className="mr-8 hover:bg-slate-100 p-2 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
+    <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white">
+      <header className="px-6 h-24 flex items-center bg-white sticky top-0 z-50">
+        <Link href="/patient" className="mr-6 hover:bg-zinc-100 p-3 rounded-full transition-all active:scale-95 border border-transparent hover:border-zinc-200">
+          <ArrowLeft className="w-6 h-6 text-black" />
         </Link>
         <div className="flex items-center gap-2">
-          <Activity className="w-6 h-6 text-blue-600" />
-          <span className="text-xl font-bold tracking-tight text-slate-900">HealthDesk</span>
+          <div className="p-1 bg-black rounded">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-black tracking-tighter text-black">HealthDesk</span>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-6 space-y-4">
+      <main className="flex-1 flex flex-col items-center justify-start py-10 px-6 space-y-8 max-w-lg mx-auto w-full">
         {!checkinSuccess ? (
-          <Card className="w-full max-w-md bg-white border-2 border-slate-200 shadow-lg overflow-hidden">
-            <CardHeader className="text-center pb-3">
-              <CardTitle className="text-2xl font-bold text-slate-900">Clinic Check-in</CardTitle>
-              <CardDescription>
-                {checking ? "Processing your check-in…" : "Enter the PIN from the reception desk"}
+          <Card className="w-full neo-card border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden animate-reveal">
+            <CardHeader className="text-center pb-8 pt-12">
+              <CardTitle className="text-4xl font-black text-black tracking-tighter">Clinic Entry</CardTitle>
+              <CardDescription className="text-zinc-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">
+                {checking ? "Verifying Authorization…" : "Join the Live Pipeline"}
               </CardDescription>
             </CardHeader>
 
             {errorMsg && (
-              <div className="mx-6 mb-2 p-3 bg-red-50 text-red-600 text-sm font-medium rounded-lg border border-red-100 flex items-center gap-2">
-                <Info className="w-4 h-4 shrink-0" /> {errorMsg}
+              <div className="mx-10 mb-6 p-4 bg-zinc-50 border border-black text-[10px] font-black uppercase tracking-widest flex items-center gap-4 animate-reveal">
+                <Info className="w-5 h-5 shrink-0" /> {errorMsg}
               </div>
             )}
 
-            {/* ── Tab switcher ── */}
-            <div className="mx-6 mb-4 flex rounded-xl overflow-hidden border border-slate-200 bg-slate-100 p-1 gap-1">
+            {/* Tab Swiper */}
+            <div className="mx-10 mb-8 flex border-2 border-black rounded-full overflow-hidden p-1.5 gap-1.5 bg-zinc-50">
               <button
                 onClick={() => { setMode("pin"); stopCamera(); setCameraError(""); setErrorMsg(""); }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  mode === "pin" ? "bg-white shadow text-blue-700" : "text-slate-500 hover:text-slate-700"
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
+                  mode === "pin" ? "bg-black text-white" : "text-zinc-400 hover:text-black hover:bg-white"
                 }`}
               >
-                <KeyRound className="w-4 h-4" /> Enter PIN
+                PIN Code
               </button>
               <button
                 onClick={() => { setMode("camera"); setErrorMsg(""); setPin(""); }}
-                className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-semibold rounded-lg transition-all ${
-                  mode === "camera" ? "bg-white shadow text-blue-700" : "text-slate-500 hover:text-slate-700"
+                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
+                  mode === "camera" ? "bg-black text-white" : "text-zinc-400 hover:text-black hover:bg-white"
                 }`}
               >
-                <Camera className="w-4 h-4" /> Scan QR
+                QR Scanner
               </button>
             </div>
 
-            <CardContent className="px-6 pb-0">
-
-              {/* ── PIN mode ── */}
+            <CardContent className="px-10 pb-4">
               {mode === "pin" && (
-                <div className="space-y-5">
-                  <div className="text-center space-y-2">
-                    <p className="text-sm text-slate-600 font-medium">
-                      Ask the receptionist for today&apos;s 6-digit PIN:
+                <div className="space-y-10 animate-reveal">
+                  <div className="text-center space-y-6">
+                    <p className="text-[9px] text-zinc-300 font-black uppercase tracking-[0.3em]">
+                      Security PIN Input
                     </p>
-                    {/* PIN digit boxes */}
                     <div className="flex gap-2 justify-center">
                       {Array.from({ length: PIN_LENGTH }).map((_, i) => (
                         <div
                           key={i}
-                          className={`w-11 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-black font-mono transition-colors ${
+                          className={`w-11 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-black font-mono transition-all ${
                             pin[i]
-                              ? "border-blue-500 bg-blue-50 text-blue-900"
-                              : "border-slate-200 bg-slate-50 text-slate-300"
+                              ? "border-black bg-white text-black translate-y-[-2px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+                              : "border-zinc-100 bg-zinc-50 text-zinc-200"
                           }`}
                         >
                           {pin[i] || "•"}
                         </div>
                       ))}
                     </div>
-                    {/* Hidden input that captures the PIN */}
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      maxLength={PIN_LENGTH}
-                      value={pin}
-                      onChange={(e) => {
-                        const v = e.target.value.replace(/\D/g, "").slice(0, PIN_LENGTH);
-                        setPin(v);
-                        setErrorMsg("");
-                      }}
-                      className="absolute opacity-0 w-0 h-0"
-                      id="pin-hidden-input"
-                      autoComplete="off"
-                    />
                   </div>
 
-                  {/* Tap area to focus the hidden input */}
-                  <button
-                    className="w-full py-3 rounded-xl bg-slate-50 border-2 border-dashed border-slate-300 text-slate-500 text-sm hover:border-blue-400 hover:text-blue-600 transition-colors"
-                    onClick={() => document.getElementById("pin-hidden-input")?.focus()}
-                  >
-                    Tap here to type the PIN
-                  </button>
-
-                  {/* Numpad for mobile */}
-                  <div className="grid grid-cols-3 gap-2">
+                  {/* Minimal Numpad */}
+                  <div className="grid grid-cols-3 gap-4">
                     {["1","2","3","4","5","6","7","8","9","","0","⌫"].map((key, i) => (
                       <button
                         key={i}
@@ -266,11 +247,11 @@ function CheckinContent() {
                             setErrorMsg("");
                           }
                         }}
-                        className={`h-12 rounded-xl text-lg font-semibold transition-all ${
+                        className={`h-14 rounded-2xl flex items-center justify-center text-lg font-black transition-all ${
                           key
                             ? key === "⌫"
-                              ? "bg-slate-100 text-slate-700 hover:bg-red-50 hover:text-red-600 active:scale-95"
-                              : "bg-slate-100 text-slate-800 hover:bg-blue-50 hover:text-blue-700 active:scale-95"
+                              ? "bg-zinc-100 text-black hover:bg-black hover:text-white"
+                              : "bg-white border-2 border-zinc-100 hover:border-black hover:bg-black hover:text-white transition-all active:scale-95"
                             : ""
                         }`}
                       >
@@ -281,64 +262,36 @@ function CheckinContent() {
                 </div>
               )}
 
-              {/* ── Camera mode ── */}
               {mode === "camera" && (
-                <div className="space-y-3">
-                  {!isSecure && (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm flex gap-2">
-                      <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                      <span>
-                        <strong>Camera requires HTTPS.</strong> You&apos;re on HTTP — camera may be blocked by the browser.
-                        Use the <strong>PIN method</strong> instead, or deploy the app to use QR scanning.
-                      </span>
-                    </div>
-                  )}
-
-                  {!cameraOpen ? (
-                    <div className="flex flex-col items-center gap-4 py-4">
-                      <div className="w-36 h-36 rounded-3xl border-4 border-dashed border-blue-200 bg-blue-50/40 flex items-center justify-center">
-                        <Camera className="w-16 h-16 text-blue-300" />
+                <div className="space-y-6 animate-reveal">
+                   {!cameraOpen ? (
+                    <div className="flex flex-col items-center gap-8 py-10">
+                      <div className="w-48 h-48 rounded-full border-4 border-dashed border-zinc-100 flex items-center justify-center group animate-pulse">
+                        <Camera className="w-16 h-16 text-zinc-200 group-hover:text-black transition-colors" />
                       </div>
                       {cameraError && (
-                        <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg p-3 text-center">
+                        <p className="text-[10px] font-black uppercase text-red-500 bg-red-50 border border-red-100 rounded-xl p-4 text-center">
                           {cameraError}
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="relative w-full aspect-square bg-black rounded-2xl overflow-hidden">
+                    <div className="relative w-full aspect-square bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-black">
                       <video
                         ref={videoRef}
                         className="w-full h-full object-cover"
                         playsInline
                         muted
                       />
-                      {/* Corner frame overlay */}
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-52 h-52 relative">
-                          <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-400 rounded-tl-lg" />
-                          <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-400 rounded-tr-lg" />
-                          <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-400 rounded-bl-lg" />
-                          <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-400 rounded-br-lg" />
-                          {/* Scan line */}
-                          <div
-                            className="absolute left-2 right-2 h-0.5 bg-blue-400/80"
-                            style={{ animation: "scanline 2s ease-in-out infinite", top: "50%" }}
-                          />
-                        </div>
+                        <div className="w-56 h-56 border-2 border-white/50 rounded-3xl" />
+                        <div className="absolute w-56 h-0.5 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)]" style={{ animation: "scanline 2.5s infinite linear" }} />
                       </div>
-                      {scannerReady && (
-                        <div className="absolute bottom-3 left-0 right-0 text-center">
-                          <span className="bg-black/50 text-white text-xs px-3 py-1.5 rounded-full">
-                            Point at the QR on the reception screen
-                          </span>
-                        </div>
-                      )}
                       <button
                         onClick={stopCamera}
-                        className="absolute top-3 right-3 w-9 h-9 bg-black/60 rounded-full flex items-center justify-center"
+                        className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black active:scale-90"
                       >
-                        <X className="w-4 h-4 text-white" />
+                        <X className="w-5 h-5" />
                       </button>
                     </div>
                   )}
@@ -346,55 +299,50 @@ function CheckinContent() {
               )}
             </CardContent>
 
-            <CardFooter className="flex flex-col gap-3 px-6 pt-5 pb-6">
-              {mode === "pin" ? (
-                <Button
-                  onClick={handlePinSubmit}
-                  disabled={pin.length !== PIN_LENGTH || checking}
-                  className="w-full h-12 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white text-base font-semibold shadow-sm transition-all"
-                >
-                  {checking
-                    ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Checking In…</>
-                    : <><KeyRound className="w-5 h-5 mr-2" /> Confirm Check-in</>
-                  }
-                </Button>
-              ) : (
-                <Button
-                  onClick={cameraOpen ? stopCamera : startCamera}
-                  className={`w-full h-12 text-white text-base font-semibold shadow-sm transition-all ${
-                    cameraOpen ? "bg-slate-600 hover:bg-slate-700" : "bg-blue-600 hover:bg-blue-700"
-                  }`}
-                  disabled={checking}
-                >
-                  {checking
-                    ? <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Checking In…</>
-                    : cameraOpen
-                    ? <><X className="w-5 h-5 mr-2" /> Stop Camera</>
-                    : <><Camera className="w-5 h-5 mr-2" /> Open Camera</>
-                  }
-                </Button>
-              )}
-              <p className="text-xs text-slate-400 text-center">
-                You need a booked appointment to check in.
-              </p>
+            <CardFooter className="flex flex-col gap-6 px-10 pb-12 pt-6">
+              <Button
+                onClick={mode === "pin" ? handlePinSubmit : (cameraOpen ? stopCamera : startCamera)}
+                disabled={(mode === "pin" && pin.length !== PIN_LENGTH) || checking}
+                className="neo-button w-full h-16 text-md rounded-2xl"
+              >
+                {checking ? <Loader2 className="w-6 h-6 animate-spin" /> : mode === "pin" ? "AUTHORIZE ENTRY" : cameraOpen ? "ABORT SCAN" : "INITIALIZE SCANNER"}
+              </Button>
+              <div className="flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                 <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> SECURE</span>
+                 <span className="flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /> FCFS QUEUE</span>
+              </div>
             </CardFooter>
           </Card>
         ) : (
-          <Card className="w-full max-w-md bg-emerald-50 border-emerald-200 shadow-xl shadow-emerald-500/10">
-            <CardContent className="flex flex-col items-center py-12 px-6 text-center space-y-4">
-              <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle className="w-10 h-10 text-emerald-600" />
+          <Card className="w-full neo-card border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-[3rem] animate-reveal">
+            <CardContent className="flex flex-col items-center py-20 px-10 text-center space-y-10">
+              <div className="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110">
+                <CheckCircle className="w-12 h-12" />
               </div>
-              <h2 className="text-2xl font-bold text-emerald-900">Checked In Successfully!</h2>
-              <p className="text-emerald-700">You have been added to the live queue.</p>
-              <div className="flex flex-col gap-3 w-full mt-4">
+              <div className="space-y-4">
+                <h2 className="text-4xl font-black tracking-tighter">Authorized.</h2>
+                <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-[0.2em]">Patient Check-in Verified</p>
+              </div>
+              
+              <div className="bg-zinc-50 border border-zinc-200 rounded-3xl p-8 text-left w-full space-y-4">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
+                  <Activity className="w-4 h-4" /> Next Steps
+                </p>
+                <p className="text-sm font-bold leading-relaxed text-zinc-600">
+                  You have been assigned a slot in the live pipeline. Maintain your phone connection to track real-time position updates.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-4 w-full">
                 <Link href="/patient/queue" className="w-full">
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md h-12">
-                    View My Queue Position
+                  <Button className="neo-button w-full h-16 text-md">
+                    TRACK POSITION
                   </Button>
                 </Link>
                 <Link href="/patient" className="w-full">
-                  <Button variant="outline" className="w-full">Go to Dashboard</Button>
+                  <Button variant="ghost" className="w-full h-14 font-black uppercase text-[10px] tracking-widest text-zinc-400 hover:text-black">
+                    RETURN TO TERMINAL
+                  </Button>
                 </Link>
               </div>
             </CardContent>
