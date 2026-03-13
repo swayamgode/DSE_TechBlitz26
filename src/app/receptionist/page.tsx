@@ -1,43 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Activity, LogOut, CheckCircle2, User, UserPlus, Clock, Search, BriefcaseMedical, Plus, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { QRCodeSVG } from "qrcode.react";
 
+const TIME_OPTIONS = [
+  "06:00 AM", "07:00 AM", "08:00 AM", "09:00 AM", "10:00 AM",
+  "11:00 AM", "12:00 PM", "01:00 PM", "02:00 PM", "03:00 PM",
+  "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM", "08:00 PM",
+  "09:00 PM",
+];
+
 export default function ReceptionistDashboard() {
   const [search, setSearch] = useState("");
   const [showCreate, setShowCreate] = useState(false);
-  const [newSlot, setNewSlot] = useState({ start: "09:00 AM", end: "10:00 AM", reg: 10, prio: 2 });
+  const [startTime, setStartTime] = useState("09:00 AM");
+  const [endTime, setEndTime] = useState("10:00 AM");
+  const [regCapacity, setRegCapacity] = useState("10");
+  const [prioCapacity, setPrioCapacity] = useState("2");
   const [creating, setCreating] = useState(false);
+  const [sessionPin, setSessionPin] = useState("");
 
   const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
   const createSlot = useMutation(api.slots.createSlot);
-
   const liveQueue = useQuery(api.queue.getLiveQueue) || [];
+
+  // Generate a 6-digit PIN on mount and store in sessionStorage so it
+  // persists across receptionist page refreshes but resets each day/session
+  useEffect(() => {
+    const stored = sessionStorage.getItem("hd_session_pin");
+    if (stored) {
+      setSessionPin(stored);
+    } else {
+      const pin = String(Math.floor(100000 + Math.random() * 900000));
+      sessionStorage.setItem("hd_session_pin", pin);
+      setSessionPin(pin);
+    }
+  }, []);
+
+  const refreshPin = () => {
+    const pin = String(Math.floor(100000 + Math.random() * 900000));
+    sessionStorage.setItem("hd_session_pin", pin);
+    setSessionPin(pin);
+  };
 
   const handleCreateSlot = async () => {
     setCreating(true);
     try {
       await createSlot({
-        startTime: newSlot.start,
-        endTime: newSlot.end,
-        regularSlots: newSlot.reg,
-        prioritySlots: newSlot.prio
+        startTime: startTime,
+        endTime: endTime,
+        regularSlots: Number(regCapacity),
+        prioritySlots: Number(prioCapacity),
       });
       setShowCreate(false);
-    } catch(err) {
+    } catch (err) {
       alert("Error creating slot");
     } finally {
       setCreating(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -75,7 +105,7 @@ export default function ReceptionistDashboard() {
           <section className="lg:col-span-1 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-                <Clock className="w-5 h-5 text-amber-600" /> Today's Slots
+                <Clock className="w-5 h-5 text-amber-600" /> Today&apos;s Slots
               </h2>
               <Button variant="outline" size="sm" onClick={() => setShowCreate(!showCreate)} className="h-8 shadow-sm">
                 <Plus className="w-4 h-4 mr-1 text-slate-400" /> New
@@ -83,40 +113,78 @@ export default function ReceptionistDashboard() {
             </div>
 
             {showCreate && (
-              <Card className="bg-white border-blue-200 shadow-sm animate-in fade-in zoom-in-95">
+              <Card className="bg-white border-blue-200 shadow-sm">
                 <CardHeader className="py-4 border-b border-slate-100 bg-slate-50">
                   <CardTitle className="text-sm font-semibold text-slate-700">Create Custom Slot</CardTitle>
                 </CardHeader>
                 <CardContent className="pt-4 space-y-3">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-xs text-slate-500 font-medium tracking-wide">Start</label>
-                      <Input value={newSlot.start} onChange={e => setNewSlot({...newSlot, start: e.target.value})} className="h-8 text-sm" />
+                      <label className="text-xs text-slate-500 font-medium tracking-wide">Start Time</label>
+                      <Select value={startTime} onValueChange={(v) => v && setStartTime(v)}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-slate-500 font-medium tracking-wide">End</label>
-                      <Input value={newSlot.end} onChange={e => setNewSlot({...newSlot, end: e.target.value})} className="h-8 text-sm" />
+                      <label className="text-xs text-slate-500 font-medium tracking-wide">End Time</label>
+                      <Select value={endTime} onValueChange={(v) => v && setEndTime(v)}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIME_OPTIONS.map((t) => (
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
-                      <label className="text-xs text-emerald-600 font-medium tracking-wide">Reg Capacity</label>
-                      <Input type="number" value={newSlot.reg} onChange={e => setNewSlot({...newSlot, reg: Number(e.target.value)})} className="h-8 text-sm" />
+                      <label className="text-xs text-emerald-600 font-medium tracking-wide">Regular Capacity</label>
+                      <Select value={regCapacity} onValueChange={(v) => v && setRegCapacity(v)}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[1,2,3,4,5,6,7,8,9,10,12,15,20].map((n) => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs text-amber-600 font-medium tracking-wide">Prio Capacity</label>
-                      <Input type="number" value={newSlot.prio} onChange={e => setNewSlot({...newSlot, prio: Number(e.target.value)})} className="h-8 text-sm" />
+                      <label className="text-xs text-amber-600 font-medium tracking-wide">Priority Capacity</label>
+                      <Select value={prioCapacity} onValueChange={(v) => v && setPrioCapacity(v)}>
+                        <SelectTrigger className="h-9 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[0,1,2,3,4,5].map((n) => (
+                            <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
-                  <Button className="w-full mt-2 h-8 bg-blue-600" onClick={handleCreateSlot} disabled={creating}>
-                    {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Database Slot"}
+                  <Button className="w-full mt-2 h-9 bg-blue-600 hover:bg-blue-700" onClick={handleCreateSlot} disabled={creating}>
+                    {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Slot"}
                   </Button>
                 </CardContent>
               </Card>
             )}
 
             <div className="space-y-4">
-              {slots.length === 0 ? <Loader2 className="w-6 h-6 animate-spin text-slate-400 mx-auto" /> : slots.map((slot: any) => {
+              {slots.length === 0 ? (
+                <div className="text-center py-8 text-slate-400 text-sm font-medium">No slots created yet. Click &quot;New&quot; to add one.</div>
+              ) : slots.map((slot: any) => {
                 const totalAppts = slot.regularSlots + slot.prioritySlots;
                 const capacityRemaining = slot.availableRegular + slot.availablePriority;
                 const isFull = capacityRemaining === 0;
@@ -137,12 +205,12 @@ export default function ReceptionistDashboard() {
                     </CardHeader>
                     <CardContent className="text-sm text-slate-500 pb-4">
                       <div className="flex justify-between mb-1">
-                        <span>Reg Aval: {slot.availableRegular}/{slot.regularSlots}</span>
-                        <span>Pri Aval: {slot.availablePriority}/{slot.prioritySlots}</span>
+                        <span>Reg: {slot.availableRegular}/{slot.regularSlots}</span>
+                        <span>Pri: {slot.availablePriority}/{slot.prioritySlots}</span>
                       </div>
                       <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mt-2">
-                        <div 
-                          className={`h-full ${isFull ? 'bg-red-400' : 'bg-blue-500'}`} 
+                        <div
+                          className={`h-full ${isFull ? 'bg-red-400' : 'bg-blue-500'}`}
                           style={{ width: `${((totalAppts - capacityRemaining) / totalAppts) * 100}%` }}
                         ></div>
                       </div>
@@ -159,8 +227,11 @@ export default function ReceptionistDashboard() {
               <h2 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
                 <User className="w-5 h-5 text-blue-600" /> Patients at Clinic
               </h2>
+              <Badge variant="outline" className="text-blue-700 bg-blue-50 border-blue-200 px-3 py-1">
+                {liveQueue.length} in Queue
+              </Badge>
             </div>
-            
+
             <div className="grid md:grid-cols-3 gap-6">
               {/* Actual Live Queue List */}
               <Card className="border-slate-200 overflow-hidden bg-white shadow-sm md:col-span-2">
@@ -204,13 +275,33 @@ export default function ReceptionistDashboard() {
               </Card>
 
               {/* Patient Scan Kiosk Display Card */}
-              <Card className="bg-white border-2 border-slate-200 text-center flex flex-col items-center justify-center p-6 space-y-4">
-                 <h3 className="font-bold text-slate-900 border-b pb-2 mb-2 w-full">Scan to Check-in</h3>
-                 <div className="bg-slate-50 p-4 rounded-xl border-4 border-slate-200">
-                   {/* In production, dynamically generate this code to the current window location host. Assumed network mobile IP test */}
-                   <QRCodeSVG value={`http://10.254.141.151:3000/patient/checkin`} size={150} />
-                 </div>
-                 <p className="text-xs text-slate-500">Patients MUST be connected to the clinic's network (10.254.141.151) on their phone and log in to scan successfully.</p>
+              <Card className="bg-white border-2 border-blue-200 text-center flex flex-col items-center justify-center p-5 space-y-3">
+                <h3 className="font-bold text-slate-900 border-b pb-2 w-full">Patient Check-in</h3>
+
+                {/* PIN — primary method, works over HTTP */}
+                <div className="w-full bg-blue-50 border border-blue-200 rounded-xl p-4 space-y-1">
+                  <p className="text-[11px] font-semibold text-blue-700 uppercase tracking-wider">Today&apos;s Check-in PIN</p>
+                  <p className="text-4xl font-black tracking-[0.25em] text-blue-900 font-mono">
+                    {sessionPin || "------"}
+                  </p>
+                  <p className="text-[10px] text-blue-600">Patient types this code on their phone</p>
+                  <button
+                    onClick={refreshPin}
+                    className="text-[10px] text-blue-500 underline hover:text-blue-700 mt-1"
+                  >
+                    Generate new PIN
+                  </button>
+                </div>
+
+                {/* QR — optional, only works over HTTPS */}
+                <div className="w-full space-y-2">
+                  <p className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">Or scan QR (HTTPS only)</p>
+                  <div className="flex justify-center bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <QRCodeSVG value={`HEALTHDESK_PIN:${sessionPin}`} size={110} />
+                  </div>
+                </div>
+
+                <p className="text-[10px] text-slate-400">Open HealthDesk → Check-in → enter PIN</p>
               </Card>
             </div>
           </section>

@@ -12,17 +12,20 @@ export const checkInPatient = mutation({
       .query("appointments")
       .filter((q) => q.and(
          q.eq(q.field("userId"), args.userId),
-         q.eq(q.field("status"), "scheduled"),
-         q.eq(q.field("checkedIn"), false)
+         q.eq(q.field("status"), "scheduled")
       ))
       .collect();
-      
-    if (appointments.length === 0) {
+
+    // Filter out already checked-in appointments in JS,
+    // because checkedIn may be undefined/null for older records
+    const pending = appointments.filter((a) => !a.checkedIn);
+
+    if (pending.length === 0) {
       throw new Error("No upcoming booked appointments found or already checked-in.");
     }
     
     // Take the first matching appointment
-    const appointment = appointments[0];
+    const appointment = pending[0];
     const isPriority = appointment.type === "priority";
     
     // 2. Mark appointment as checked-in
