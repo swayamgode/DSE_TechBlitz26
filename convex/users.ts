@@ -64,3 +64,25 @@ export const getUser = query({
     return await ctx.db.get(args.userId);
   },
 });
+
+export const setBreakStatus = mutation({
+  args: { 
+    userId: v.id("users"),
+    wantsBreak: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      wantsBreak: args.wantsBreak,
+    });
+  },
+});
+
+export const getDoctors = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("role"), "doctor"))
+      .collect();
+  },
+});

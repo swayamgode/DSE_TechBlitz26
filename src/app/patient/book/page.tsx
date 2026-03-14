@@ -3,8 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Activity, ArrowLeft, CalendarCheck, Clock, Loader2, Info } from "lucide-react";
+import { Activity, ArrowLeft, CalendarCheck, Clock, Loader2, Info, Calendar, CheckCircle2, AlertCircle } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 
@@ -17,24 +16,16 @@ export default function BookSlotPage() {
 
   const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
   const bookSlotMut = useMutation(api.appointments.bookSlot);
-
-  // We fetch user ID from localstorage for this simple project
-  const currentUserId = typeof window !== 'undefined' ? localStorage.getItem("healthdesk_userId") : null;
+  const currentUserId = typeof window !== "undefined" ? localStorage.getItem("healthdesk_userId") : null;
 
   const handleBook = async () => {
     if (!selectedSlot || !currentUserId) return;
     setBookingLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
-
     try {
-      await bookSlotMut({
-        userId: currentUserId as any,
-        slotId: selectedSlot._id,
-        type: slotType,
-      });
-
-      setSuccessMsg(`Successfully booked ${slotType} slot for ${selectedSlot.startTime} - ${selectedSlot.endTime}.`);
+      await bookSlotMut({ userId: currentUserId as any, slotId: selectedSlot._id, type: slotType });
+      setSuccessMsg(`Slot confirmed for ${selectedSlot.startTime} – ${selectedSlot.endTime}.`);
       setSelectedSlot(null);
     } catch (err: any) {
       setErrorMsg(err.message || "Failed to book slot.");
@@ -44,47 +35,71 @@ export default function BookSlotPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col">
+    <div className="min-h-screen font-sans bg-slate-50 text-slate-900 relative overflow-hidden flex flex-col">
+      {/* Subtle bg blobs */}
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#137dab]/5 rounded-full blur-[100px] -translate-y-1/3 translate-x-1/3 pointer-events-none" />
+
       {/* Navbar */}
-      <header className="px-6 h-16 flex items-center border-b bg-white top-0 z-50">
-        <Link href="/patient" className="mr-8 hover:bg-slate-100 p-2 rounded-full transition-colors">
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
+      <header className="px-6 lg:px-12 h-16 flex items-center gap-4 sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <Link href="/patient" className="p-2 bg-slate-100 hover:bg-[#137dab]/10 hover:text-[#137dab] rounded-lg transition-all border border-slate-200 text-slate-500">
+          <ArrowLeft className="w-4 h-4" />
         </Link>
         <div className="flex items-center gap-2">
-          <Activity className="w-6 h-6 text-blue-600" />
-          <span className="text-xl font-bold tracking-tight text-slate-900">HealthDesk</span>
+          <div className="p-1.5 bg-[#137dab] rounded-lg">
+            <Activity className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-lg font-black tracking-tight text-slate-800">HealthDesk</span>
         </div>
       </header>
 
-      <main className="flex-1 p-6 lg:p-12 max-w-4xl mx-auto w-full space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">Book a Consultation Slot</h1>
-          <p className="text-slate-600">Choose an available time slot for today.</p>
+      <main className="flex-1 p-6 lg:p-12 max-w-5xl mx-auto w-full space-y-8 relative z-10">
+
+        {/* Header */}
+        <div className="pb-6 border-b border-slate-200">
+          <div className="flex items-center gap-2 mb-2">
+            <div className="px-2.5 py-1 bg-[#137dab]/10 text-[#137dab] rounded-full text-[9px] font-black uppercase tracking-[0.2em] border border-[#137dab]/20">
+              Patient Portal
+            </div>
+          </div>
+          <h1 className="text-3xl font-black tracking-tight text-slate-900">Book a Consultation</h1>
+          <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">Choose an available time slot for today</p>
         </div>
 
+        {/* Alerts */}
         {errorMsg && (
-          <div className="p-4 bg-red-50 text-red-600 font-medium rounded-lg border border-red-100 flex items-center gap-2">
-            <Info className="w-5 h-5 shrink-0" /> {errorMsg}
+          <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 font-bold text-sm rounded-xl flex items-center gap-3">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" /> {errorMsg}
           </div>
         )}
-
         {successMsg && (
-          <div className="p-4 bg-emerald-50 text-emerald-700 font-medium rounded-lg border border-emerald-200">
-            {successMsg}
+          <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 font-bold text-sm rounded-xl flex items-center gap-3">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" /> {successMsg}
           </div>
         )}
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 flex items-center gap-4 mb-6 shadow-sm">
-          <span className="text-sm font-medium text-slate-700">Booking Type:</span>
-          <div className="flex items-center bg-slate-100 p-1 rounded-lg">
-            <button 
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${slotType === "regular" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+        {/* Booking Type Toggle */}
+        <div className="bg-white border border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center gap-4 shadow-sm">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Booking Type</p>
+            <p className="text-[9px] text-slate-400 font-medium mt-0.5">Select the urgency of your visit</p>
+          </div>
+          <div className="flex items-center bg-slate-100 p-1 rounded-xl gap-1 sm:ml-auto">
+            <button
+              className={`px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                slotType === "regular"
+                  ? "bg-white text-[#137dab] shadow-sm border border-slate-200"
+                  : "text-slate-400 hover:text-slate-600"
+              }`}
               onClick={() => setSlotType("regular")}
             >
               Regular
             </button>
-            <button 
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${slotType === "priority" ? "bg-amber-100 text-amber-800 shadow-sm" : "text-slate-500 hover:text-amber-700"}`}
+            <button
+              className={`px-5 py-2 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all ${
+                slotType === "priority"
+                  ? "bg-amber-400 text-amber-900 shadow-sm"
+                  : "text-slate-400 hover:text-amber-600"
+              }`}
               onClick={() => setSlotType("priority")}
             >
               Priority / Emer.
@@ -92,62 +107,90 @@ export default function BookSlotPage() {
           </div>
         </div>
 
+        {/* Slot Grid */}
         {slots.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+          <div className="flex flex-col items-center justify-center py-24 text-center">
+            <Loader2 className="w-8 h-8 text-[#137dab] animate-spin mb-4" />
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading available slots...</p>
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {slots.map((slot: any) => {
-              // Determine availability based on selected type
+            {slots.map((slot: any, idx: number) => {
               const isAvailable = slotType === "regular" ? slot.availableRegular > 0 : slot.availablePriority > 0;
               const isSelected = selectedSlot?._id === slot._id;
+              const count = slotType === "regular" ? slot.availableRegular : slot.availablePriority;
 
               return (
-                <Card 
-                  key={slot._id} 
-                  className={`cursor-pointer transition-all ${
-                    !isAvailable ? "opacity-50 grayscale bg-slate-100 pointer-events-none" :
-                    isSelected ? "ring-2 ring-blue-600 border-blue-600 bg-blue-50/50" : "hover:border-blue-300"
-                  }`}
+                <div
+                  key={slot._id}
                   onClick={() => isAvailable && setSelectedSlot(slot)}
+                  style={{ animationDelay: `${idx * 40}ms` }}
+                  className={`relative bg-white border rounded-2xl p-5 transition-all duration-200 overflow-hidden ${
+                    !isAvailable
+                      ? "opacity-40 grayscale pointer-events-none border-slate-200"
+                      : isSelected
+                      ? "border-[#137dab] shadow-[0_0_0_3px_rgba(19,125,171,0.15)] cursor-pointer"
+                      : "border-slate-200 shadow-sm hover:shadow-md hover:border-[#137dab]/40 cursor-pointer hover:-translate-y-0.5"
+                  }`}
                 >
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center justify-between">
-                      <span className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        {slot.startTime}
-                      </span>
-                    </CardTitle>
-                    <CardDescription className="text-xs">
-                      {slot.endTime}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="text-sm border-t border-slate-100 pt-3">
-                    <div className="flex justify-between items-center text-slate-600">
-                      <span>{slotType === "regular" ? "Regular left:" : "Priority left:"}</span>
-                      <span className={`font-bold ${!isAvailable ? "text-red-500" : "text-slate-900"}`}>
-                        {slotType === "regular" ? slot.availableRegular : slot.availablePriority}
-                      </span>
+                  {isSelected && (
+                    <div className="absolute top-3 right-3">
+                      <div className="w-5 h-5 bg-[#137dab] rounded-full flex items-center justify-center">
+                        <CheckCircle2 className="w-3 h-3 text-white" />
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
+
+                  <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                    <Calendar className="w-3 h-3" /> {slot.date || "Today"}
+                  </div>
+
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock className="w-4 h-4 text-[#137dab]" />
+                    <span className="text-xl font-black tracking-tight text-slate-900">{slot.startTime}</span>
+                  </div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 ml-6">until {slot.endTime}</p>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                      {slotType === "regular" ? "Regular" : "Priority"} slots
+                    </span>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                      !isAvailable
+                        ? "bg-rose-50 text-rose-500 border border-rose-200"
+                        : "bg-[#137dab]/10 text-[#137dab] border border-[#137dab]/20"
+                    }`}>
+                      {count} left
+                    </span>
+                  </div>
+                </div>
               );
             })}
           </div>
         )}
 
-        <div className="flex justify-end pt-8">
-          <Button 
-            size="lg" 
-            className="w-full sm:w-auto h-12 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20"
+        {/* Confirm Button */}
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 border-t border-slate-200">
+          {selectedSlot ? (
+            <div className="flex items-center gap-3 text-sm font-bold text-slate-600 bg-[#137dab]/5 border border-[#137dab]/20 px-4 py-3 rounded-xl">
+              <div className="w-2 h-2 bg-[#137dab] rounded-full animate-pulse" />
+              Selected: <span className="text-[#137dab] font-black">{selectedSlot.startTime} – {selectedSlot.endTime}</span>
+            </div>
+          ) : (
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Select a slot to confirm your booking</p>
+          )}
+
+          <Button
+            size="lg"
+            className="h-12 px-8 font-black uppercase tracking-widest text-[10px] bg-[#137dab] text-white hover:bg-[#137dab]/90 shadow-[0_4px_12px_rgba(19,125,171,0.25)] rounded-xl transition-all active:scale-[0.97] disabled:opacity-40"
             disabled={!selectedSlot || bookingLoading}
             onClick={handleBook}
           >
-            {bookingLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <CalendarCheck className="w-5 h-5 mr-2" />} 
+            {bookingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CalendarCheck className="w-4 h-4 mr-2" />}
             Confirm Booking
           </Button>
         </div>
+
       </main>
     </div>
   );

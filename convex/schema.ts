@@ -6,9 +6,11 @@ export default defineSchema({
     name: v.string(),
     password: v.optional(v.string()), // Basic testing password
     role: v.union(v.literal("patient"), v.literal("doctor"), v.literal("receptionist")),
+    wantsBreak: v.optional(v.boolean()),
   }),
 
   slots: defineTable({
+    date: v.optional(v.string()),  // e.g. "2026-03-13"
     startTime: v.string(), // e.g. "09:00 AM"
     endTime: v.string(),   // e.g. "10:00 AM"
     regularSlots: v.number(),
@@ -29,6 +31,7 @@ export default defineSchema({
     position: v.number(),
     arrivalTime: v.string(), // ISODate string
     priority: v.boolean(),
+    status: v.optional(v.union(v.literal("Waiting"), v.literal("Consulting"))),
   }),
 
   medicalInfo: defineTable({

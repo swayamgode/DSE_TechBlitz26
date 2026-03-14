@@ -161,49 +161,53 @@ function CheckinContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white flex flex-col selection:bg-black selection:text-white">
-      <header className="px-6 h-24 flex items-center bg-white sticky top-0 z-50">
-        <Link href="/patient" className="mr-6 hover:bg-zinc-100 p-3 rounded-full transition-all active:scale-95 border border-transparent hover:border-zinc-200">
-          <ArrowLeft className="w-6 h-6 text-black" />
+    <div className="min-h-screen font-sans selection:bg-white/30 selection:text-white relative overflow-hidden flex flex-col text-white">
+      {/* Background gradients */}
+      <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] bg-sky-300/20 rounded-full blur-[100px] pointer-events-none" />
+
+      <header className="px-6 h-24 flex items-center bg-[#137dab]/80 backdrop-blur-md sticky top-0 z-50 border-b border-white/10">
+        <Link href="/patient" className="mr-6 bg-white/10 hover:bg-white/20 p-3 rounded-xl transition-all active:scale-95 border border-white/20 shadow-sm backdrop-blur-sm text-white/80 hover:text-white">
+          <ArrowLeft className="w-5 h-5 text-white" />
         </Link>
-        <div className="flex items-center gap-2">
-          <div className="p-1 bg-black rounded">
-            <Activity className="w-5 h-5 text-white" />
+        <div className="flex items-center gap-2 group cursor-pointer">
+          <div className="p-2 bg-white rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+            <Activity className="w-6 h-6 text-[#137dab]" />
           </div>
-          <span className="text-xl font-black tracking-tighter text-black">HealthDesk</span>
+          <span className="text-xl font-black tracking-tighter text-white">HealthDesk</span>
         </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-start py-10 px-6 space-y-8 max-w-lg mx-auto w-full">
+      <main className="flex-1 flex flex-col items-center justify-start py-10 px-6 space-y-8 max-w-lg mx-auto w-full relative z-10">
         {!checkinSuccess ? (
-          <Card className="w-full neo-card border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] overflow-hidden animate-reveal">
-            <CardHeader className="text-center pb-8 pt-12">
-              <CardTitle className="text-4xl font-black text-black tracking-tighter">Clinic Entry</CardTitle>
-              <CardDescription className="text-zinc-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">
+          <Card className="w-full neo-card bg-white/10 border-none shadow-[0_15px_40px_rgba(0,0,0,0.15)] backdrop-blur-xl overflow-hidden animate-reveal">
+            <CardHeader className="text-center pb-8 pt-12 border-b border-white/10 bg-white/5">
+              <CardTitle className="text-4xl font-black text-white tracking-tighter drop-shadow-md">Clinic Entry</CardTitle>
+              <CardDescription className="text-white/60 font-bold uppercase text-[10px] tracking-[0.2em] mt-2">
                 {checking ? "Verifying Authorization…" : "Join the Live Pipeline"}
               </CardDescription>
             </CardHeader>
 
             {errorMsg && (
-              <div className="mx-10 mb-6 p-4 bg-zinc-50 border border-black text-[10px] font-black uppercase tracking-widest flex items-center gap-4 animate-reveal">
+              <div className="mx-10 mt-6 mb-2 p-4 bg-rose-500/20 border border-rose-400/30 text-rose-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-4 animate-reveal rounded-xl shadow-inner backdrop-blur-sm">
                 <Info className="w-5 h-5 shrink-0" /> {errorMsg}
               </div>
             )}
 
             {/* Tab Swiper */}
-            <div className="mx-10 mb-8 flex border-2 border-black rounded-full overflow-hidden p-1.5 gap-1.5 bg-zinc-50">
+            <div className="mx-10 my-8 flex border border-white/20 rounded-2xl overflow-hidden p-1.5 gap-1.5 bg-white/5 shadow-inner backdrop-blur-sm">
               <button
                 onClick={() => { setMode("pin"); stopCamera(); setCameraError(""); setErrorMsg(""); }}
-                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
-                  mode === "pin" ? "bg-black text-white" : "text-zinc-400 hover:text-black hover:bg-white"
+                className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                  mode === "pin" ? "bg-white text-[#137dab] shadow-[0_5px_15px_rgba(0,0,0,0.1)]" : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
                 PIN Code
               </button>
               <button
                 onClick={() => { setMode("camera"); setErrorMsg(""); setPin(""); }}
-                className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest rounded-full transition-all ${
-                  mode === "camera" ? "bg-black text-white" : "text-zinc-400 hover:text-black hover:bg-white"
+                className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                  mode === "camera" ? "bg-white text-[#137dab] shadow-[0_5px_15px_rgba(0,0,0,0.1)]" : "text-white/50 hover:text-white hover:bg-white/10"
                 }`}
               >
                 QR Scanner
@@ -214,17 +218,17 @@ function CheckinContent() {
               {mode === "pin" && (
                 <div className="space-y-10 animate-reveal">
                   <div className="text-center space-y-6">
-                    <p className="text-[9px] text-zinc-300 font-black uppercase tracking-[0.3em]">
+                    <p className="text-[9px] text-white/50 font-black uppercase tracking-[0.3em] drop-shadow-sm">
                       Security PIN Input
                     </p>
                     <div className="flex gap-2 justify-center">
                       {Array.from({ length: PIN_LENGTH }).map((_, i) => (
                         <div
                           key={i}
-                          className={`w-11 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-black font-mono transition-all ${
+                          className={`w-11 h-16 rounded-xl border flex items-center justify-center text-3xl font-black font-mono transition-all ${
                             pin[i]
-                              ? "border-black bg-white text-black translate-y-[-2px] shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                              : "border-zinc-100 bg-zinc-50 text-zinc-200"
+                              ? "border-white bg-white text-[#137dab] translate-y-[-2px] shadow-[0_10px_20px_rgba(0,0,0,0.2)]"
+                              : "border-white/20 bg-white/5 text-white/30 backdrop-blur-sm shadow-inner"
                           }`}
                         >
                           {pin[i] || "•"}
@@ -247,11 +251,11 @@ function CheckinContent() {
                             setErrorMsg("");
                           }
                         }}
-                        className={`h-14 rounded-2xl flex items-center justify-center text-lg font-black transition-all ${
+                        className={`h-16 rounded-2xl flex items-center justify-center text-xl font-black transition-all shadow-sm ${
                           key
                             ? key === "⌫"
-                              ? "bg-zinc-100 text-black hover:bg-black hover:text-white"
-                              : "bg-white border-2 border-zinc-100 hover:border-black hover:bg-black hover:text-white transition-all active:scale-95"
+                              ? "bg-white/10 text-white hover:bg-rose-500/20 hover:text-rose-200 border border-transparent hover:border-rose-400/30"
+                              : "bg-white hover:bg-white/90 text-[#137dab] border-none shadow-[0_5px_15px_rgba(0,0,0,0.15)] hover:-translate-y-1 active:scale-95 active:translate-y-0"
                             : ""
                         }`}
                       >
@@ -266,30 +270,30 @@ function CheckinContent() {
                 <div className="space-y-6 animate-reveal">
                    {!cameraOpen ? (
                     <div className="flex flex-col items-center gap-8 py-10">
-                      <div className="w-48 h-48 rounded-full border-4 border-dashed border-zinc-100 flex items-center justify-center group animate-pulse">
-                        <Camera className="w-16 h-16 text-zinc-200 group-hover:text-black transition-colors" />
+                      <div className="w-48 h-48 rounded-full border border-dashed border-white/30 bg-white/5 flex items-center justify-center group animate-pulse backdrop-blur-sm shadow-inner">
+                        <Camera className="w-16 h-16 text-white/50 group-hover:text-white transition-colors drop-shadow-md" />
                       </div>
                       {cameraError && (
-                        <p className="text-[10px] font-black uppercase text-red-500 bg-red-50 border border-red-100 rounded-xl p-4 text-center">
+                        <p className="text-[10px] font-black uppercase text-rose-200 bg-rose-500/10 border border-rose-500/20 rounded-xl p-4 text-center backdrop-blur-sm">
                           {cameraError}
                         </p>
                       )}
                     </div>
                   ) : (
-                    <div className="relative w-full aspect-square bg-black rounded-3xl overflow-hidden shadow-2xl border-4 border-black">
+                    <div className="relative w-full aspect-square bg-black/50 backdrop-blur-xl rounded-3xl overflow-hidden shadow-2xl border border-white/20">
                       <video
                         ref={videoRef}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover opacity-80"
                         playsInline
                         muted
                       />
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-56 h-56 border-2 border-white/50 rounded-3xl" />
-                        <div className="absolute w-56 h-0.5 bg-red-500 shadow-[0_0_15px_rgba(239,68,68,1)]" style={{ animation: "scanline 2.5s infinite linear" }} />
+                        <div className="w-56 h-56 border-2 border-emerald-400/50 rounded-3xl" />
+                        <div className="absolute w-56 h-0.5 bg-emerald-400 shadow-[0_0_15px_rgba(52,211,153,1)]" style={{ animation: "scanline 2.5s infinite linear" }} />
                       </div>
                       <button
                         onClick={stopCamera}
-                        className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center border-2 border-black active:scale-90"
+                        className="absolute top-4 right-4 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-md text-white rounded-full flex items-center justify-center border border-white/30 active:scale-90 transition-all shadow-sm"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -299,48 +303,48 @@ function CheckinContent() {
               )}
             </CardContent>
 
-            <CardFooter className="flex flex-col gap-6 px-10 pb-12 pt-6">
+            <CardFooter className="flex flex-col gap-6 px-10 pb-12 pt-6 bg-white/5 border-t border-white/10">
               <Button
                 onClick={mode === "pin" ? handlePinSubmit : (cameraOpen ? stopCamera : startCamera)}
                 disabled={(mode === "pin" && pin.length !== PIN_LENGTH) || checking}
-                className="neo-button w-full h-16 text-md rounded-2xl"
+                className="neo-button w-full h-16 text-md rounded-2xl bg-white text-[#137dab] hover:bg-white/90 shadow-[0_5px_15px_rgba(0,0,0,0.2)] font-black uppercase tracking-[0.2em]"
               >
-                {checking ? <Loader2 className="w-6 h-6 animate-spin" /> : mode === "pin" ? "AUTHORIZE ENTRY" : cameraOpen ? "ABORT SCAN" : "INITIALIZE SCANNER"}
+                {checking ? <Loader2 className="w-6 h-6 mr-3 animate-spin" /> : mode === "pin" ? "AUTHORIZE ENTRY" : cameraOpen ? "ABORT SCAN" : "INITIALIZE SCANNER"}
               </Button>
-              <div className="flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-300">
+              <div className="flex items-center justify-center gap-6 text-[10px] font-black uppercase tracking-[0.2em] text-white/50">
                  <span className="flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" /> SECURE</span>
                  <span className="flex items-center gap-1.5"><RefreshCw className="w-3.5 h-3.5" /> FCFS QUEUE</span>
               </div>
             </CardFooter>
           </Card>
         ) : (
-          <Card className="w-full neo-card border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] rounded-[3rem] animate-reveal">
+          <Card className="w-full neo-card bg-white/10 border-none shadow-[0_20px_50px_rgba(0,0,0,0.2)] rounded-[3rem] animate-reveal backdrop-blur-xl">
             <CardContent className="flex flex-col items-center py-20 px-10 text-center space-y-10">
-              <div className="w-24 h-24 bg-black text-white rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110">
-                <CheckCircle className="w-12 h-12" />
+              <div className="w-28 h-28 bg-white text-[#137dab] shadow-[0_15px_40px_rgba(0,0,0,0.15)] rounded-full flex items-center justify-center mb-4 transition-transform hover:scale-110">
+                <CheckCircle className="w-14 h-14" />
               </div>
               <div className="space-y-4">
-                <h2 className="text-4xl font-black tracking-tighter">Authorized.</h2>
-                <p className="text-zinc-500 font-bold uppercase text-[10px] tracking-[0.2em]">Patient Check-in Verified</p>
+                <h2 className="text-4xl font-black tracking-tighter text-white drop-shadow-md">Authorized.</h2>
+                <p className="text-emerald-300 font-bold uppercase text-[10px] tracking-[0.2em] drop-shadow-sm">Patient Check-in Verified</p>
               </div>
               
-              <div className="bg-zinc-50 border border-zinc-200 rounded-3xl p-8 text-left w-full space-y-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2">
-                  <Activity className="w-4 h-4" /> Next Steps
+              <div className="bg-white/5 border border-white/20 rounded-3xl p-8 text-left w-full space-y-4 backdrop-blur-sm shadow-inner">
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] flex items-center gap-2 text-white/70">
+                  <Activity className="w-4 h-4 text-white" /> Next Steps
                 </p>
-                <p className="text-sm font-bold leading-relaxed text-zinc-600">
+                <p className="text-sm font-bold leading-relaxed text-white/90">
                   You have been assigned a slot in the live pipeline. Maintain your phone connection to track real-time position updates.
                 </p>
               </div>
 
               <div className="flex flex-col gap-4 w-full">
                 <Link href="/patient/queue" className="w-full">
-                  <Button className="neo-button w-full h-16 text-md">
+                  <Button className="neo-button w-full h-16 text-md bg-white text-[#137dab] hover:bg-white/90 shadow-[0_5px_15px_rgba(0,0,0,0.2)] font-black uppercase tracking-[0.2em]">
                     TRACK POSITION
                   </Button>
                 </Link>
                 <Link href="/patient" className="w-full">
-                  <Button variant="ghost" className="w-full h-14 font-black uppercase text-[10px] tracking-widest text-zinc-400 hover:text-black">
+                  <Button variant="ghost" className="w-full h-14 font-black uppercase text-[10px] tracking-widest text-white/60 hover:text-white hover:bg-white/10 border border-transparent hover:border-white/20">
                     RETURN TO TERMINAL
                   </Button>
                 </Link>

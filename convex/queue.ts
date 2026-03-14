@@ -37,12 +37,50 @@ export const checkInPatient = mutation({
     const queueId = await ctx.db.insert("queue", {
       slotId: appointment.slotId,
       patientId: args.userId,
-      position: 0, // We calculate dynamic priority ranking in the query
+      position: 0, 
       arrivalTime: new Date().toISOString(),
       priority: isPriority,
+      status: "Waiting",
     });
     
     return queueId;
+  }
+});
+
+// Mutation to call a patient (start consultation)
+export const callPatient = mutation({
+  args: { queueId: v.id("queue") },
+  handler: async (ctx, args) => {
+    // Set all other patients in the same slot to 'Waiting' if needed, 
+    // but typically only one is 'Consulting' at a time.
+    await ctx.db.patch(args.queueId, { status: "Consulting" });
+  }
+});
+
+// Mutation to remove a patient from queue (completed or cancelled)
+export const removeFromQueue = mutation({
+  args: { queueId: v.id("queue"), status: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const entry = await ctx.db.get(args.queueId);
+    if (!entry) return;
+
+    // Find the corresponding appointment and update it
+    const appointment = await ctx.db
+      .query("appointments")
+      .filter((q) => q.and(
+        q.eq(q.field("userId"), entry.patientId),
+        q.eq(q.field("slotId"), entry.slotId),
+        q.eq(q.field("status"), "scheduled")
+      ))
+      .first();
+
+    if (appointment) {
+      await ctx.db.patch(appointment._id, { 
+        status: (args.status as any) || "completed" 
+      });
+    }
+
+    await ctx.db.delete(args.queueId);
   }
 });
 
@@ -66,9 +104,7 @@ export const getQueuePosition = query({
       .filter((q) => q.eq(q.field("slotId"), userQueue.slotId))
       .collect();
       
-    // 3. Sorting logic for real FCFS with Priority overrides
-    // 🔀 Priority patients jump ahead of regular patients.
-    // 🔀 If both are same priority status -> earlier arrival time goes first.
+    // 3. Sorting logic
     allInSlot.sort((a, b) => {
       if (a.priority === b.priority) {
         return new Date(a.arrivalTime).getTime() - new Date(b.arrivalTime).getTime();
@@ -76,56 +112,69 @@ export const getQueuePosition = query({
       return a.priority ? -1 : 1;
     });
     
-    // 4. Determine their ranking (1-indexed)
+    // 4. Determine ranking
     const index = allInSlot.findIndex(q => q._id === userQueue._id);
-    const position = index + 1;
-    
     return {
-      position: position,
+      position: index + 1,
       totalInQueue: allInSlot.length,
-      estimatedWaitTime: position * 10, // Approx 10 mins wait per person
+      estimatedWaitTime: index * 10,
       isPriority: userQueue.priority,
       arrivalTime: userQueue.arrivalTime,
+      status: userQueue.status || "Waiting",
     };
   }
 });
 
 // Used by Receptionist and Doctor to view the live line
 export const getLiveQueue = query({
-  args: {},
-  handler: async (ctx) => {
-    // 1. Get all current queues
-    const allQueueEntries = await ctx.db.query("queue").collect();
+  args: { slotId: v.optional(v.id("slots")) },
+  handler: async (ctx, args) => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     
-    // We only want people who are still waiting or consulting. 
-    // In a real app we'd filter by active date.
+    let allQueueEntries;
+    if (args.slotId) {
+      allQueueEntries = await ctx.db
+        .query("queue")
+        .filter((q) => q.eq(q.field("slotId"), args.slotId))
+        .collect();
+    } else {
+      const slotsToday = await ctx.db
+        .query("slots")
+        .filter((q) => q.or(
+          q.eq(q.field("date"), today),
+          q.eq(q.field("date"), undefined)
+        ))
+        .collect();
+      const slotIds = new Set(slotsToday.map(s => s._id));
+      const allEntries = await ctx.db.query("queue").collect();
+      allQueueEntries = allEntries.filter(q => slotIds.has(q.slotId));
+    }
     
-    // 2. Map and sort them
     const mapped = await Promise.all(allQueueEntries.map(async (q) => {
       const patient = await ctx.db.get(q.patientId);
-      
-      // Fetch medical info for the doctor's view
       const medInfo = await ctx.db
         .query("medicalInfo")
         .withIndex("by_patient", (qi) => qi.eq("patientId", q.patientId))
         .first();
 
-      const timeStr = new Date(q.arrivalTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const dateObj = new Date(q.arrivalTime);
+      const timeStr = dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+      const dateStr = dateObj.toLocaleDateString([], { month: 'short', day: 'numeric' });
       
       return {
         _id: q._id,
         patientId: q.patientId,
         name: patient?.name || "Unknown Patient",
         type: q.priority ? "Priority" : "Regular",
-        time: timeStr,
+        time: `${dateStr}, ${timeStr}`,
         rawTime: q.arrivalTime,
         priority: q.priority,
-        status: "Waiting",
+        status: q.status || "Waiting",
         medicalInfo: medInfo ?? null,
       };
     }));
     
-    // 3. Sorting logic overrides
     mapped.sort((a, b) => {
       if (a.priority === b.priority) {
         return new Date(a.rawTime).getTime() - new Date(b.rawTime).getTime();

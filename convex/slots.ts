@@ -8,26 +8,52 @@ export const getSlots = query({
   },
 });
 
-// Query to compute available capacity for the slots
+// Query to compute available capacity for the slots — returns ALL dates
 export const getSlotsWithAvailability = query({
   args: {},
   handler: async (ctx) => {
     const slots = await ctx.db.query("slots").collect();
     const appointments = await ctx.db.query("appointments").collect();
-    
-    return slots.map(slot => {
-      // Find non-cancelled appointments for this slot
+
+    const result = await Promise.all(slots.map(async (slot) => {
       const slotAppointments = appointments.filter(a => a.slotId === slot._id && a.status !== "cancelled");
-      
+
       const regularCount = slotAppointments.filter(a => a.type === "regular").length;
       const priorityCount = slotAppointments.filter(a => a.type === "priority").length;
-      
+
+      const bookedPatients = await Promise.all(slotAppointments.map(async (a) => {
+        const user = await ctx.db.get(a.userId);
+        return {
+          name: user?.name || "Unknown",
+          type: a.type,
+          status: a.status,
+          checkedIn: a.checkedIn,
+        };
+      }));
+
       return {
         ...slot,
         totalAppointments: slotAppointments.length,
         availableRegular: Math.max(0, slot.regularSlots - regularCount),
         availablePriority: Math.max(0, slot.prioritySlots - priorityCount),
+        bookedPatients,
       };
+    }));
+
+    // Sort by date then time
+    const parseTime = (timeStr: string) => {
+      const [time, modifier] = timeStr.split(' ');
+      let [h, m] = time.split(':').map(Number);
+      if (modifier === 'PM' && h !== 12) h += 12;
+      if (modifier === 'AM' && h === 12) h = 0;
+      return (h * 60) + m;
+    };
+
+    return result.sort((a, b) => {
+      const dateA = a.date ?? "";
+      const dateB = b.date ?? "";
+      if (dateA !== dateB) return dateA.localeCompare(dateB);
+      return parseTime(a.startTime) - parseTime(b.startTime);
     });
   },
 });
@@ -35,6 +61,7 @@ export const getSlotsWithAvailability = query({
 // Allow Receptionist to manually create slots
 export const createSlot = mutation({
   args: {
+    date: v.string(),      // e.g. "2026-03-13"
     startTime: v.string(), // e.g. "09:00 AM"
     endTime: v.string(),   // e.g. "10:00 AM"
     regularSlots: v.number(),
@@ -42,6 +69,27 @@ export const createSlot = mutation({
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("slots", {
+      date: args.date,
+      startTime: args.startTime,
+      endTime: args.endTime,
+      regularSlots: args.regularSlots,
+      prioritySlots: args.prioritySlots,
+    });
+  },
+});
+
+export const updateSlot = mutation({
+  args: {
+    slotId: v.id("slots"),
+    date: v.string(),      
+    startTime: v.string(), 
+    endTime: v.string(),   
+    regularSlots: v.number(),
+    prioritySlots: v.number(),
+  },
+  handler: async (ctx, args) => {
+    return await ctx.db.patch(args.slotId, {
+      date: args.date,
       startTime: args.startTime,
       endTime: args.endTime,
       regularSlots: args.regularSlots,
@@ -59,6 +107,9 @@ export const initializeSlots = mutation({
       return "Slots already initialized";
     }
 
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     const defaultSlots = [
       { start: "09:00 AM", end: "10:00 AM" },
       { start: "10:00 AM", end: "11:00 AM" },
@@ -71,6 +122,7 @@ export const initializeSlots = mutation({
 
     for (const slot of defaultSlots) {
       await ctx.db.insert("slots", {
+        date: today,
         startTime: slot.start,
         endTime: slot.end,
         regularSlots: 10,  // From prompt: 10 regular slots
@@ -79,5 +131,47 @@ export const initializeSlots = mutation({
     }
 
     return "Successfully initialized slots";
+  },
+});
+
+export const getCurrentSlot = query({
+  args: {},
+  handler: async (ctx) => {
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hours = d.getHours();
+    const minutes = d.getMinutes();
+    const nowMinutes = (hours * 60) + minutes;
+
+    const slots = await ctx.db
+      .query("slots")
+      .filter((q) => q.or(
+        q.eq(q.field("date"), today),
+        q.eq(q.field("date"), undefined)
+      ))
+      .collect();
+
+    const parseTime = (timeStr: string) => {
+      const [time, modifier] = timeStr.split(' ');
+      let [h, m] = time.split(':').map(Number);
+      if (modifier === 'PM' && h !== 12) h += 12;
+      if (modifier === 'AM' && h === 12) h = 0;
+      return (h * 60) + m;
+    };
+
+    // Find the slot that contains the current time
+    const activeSlot = slots.find(s => {
+      const start = parseTime(s.startTime);
+      const end = parseTime(s.endTime);
+      return nowMinutes >= start && nowMinutes < end;
+    });
+
+    if (activeSlot) return activeSlot;
+
+    // If no slot is exactly running, find the NEXT upcoming slot
+    const upcomingSlots = slots.filter(s => parseTime(s.startTime) > nowMinutes)
+      .sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
+
+    return upcomingSlots[0] || slots[slots.length - 1] || null;
   },
 });

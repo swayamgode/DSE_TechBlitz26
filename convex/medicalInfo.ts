@@ -32,8 +32,13 @@ export const saveMedicalInfo = mutation({
     });
 
     // Simple hashing for demonstration in the prototype 
-    // (In production, we use crypto.subtle.digest('SHA-256', ...))
-    const checksum = "sha256-" + Buffer.from(content).toString("base64").slice(0, 32);
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32bit integer
+    }
+    const checksum = "hash-" + Math.abs(hash).toString(16).slice(0, 32);
     const timestamp = new Date().toISOString();
 
     const existing = await ctx.db
