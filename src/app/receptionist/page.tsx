@@ -631,12 +631,12 @@ export default function ReceptionistDashboard() {
           <div>
             <h1 className="text-3xl font-black tracking-tight text-slate-900">Command Center</h1>
             <p className="text-slate-400 font-bold uppercase text-[10px] tracking-[0.2em] mt-1">
-              Schedule Management · Queue · Patient Tracker
+              SCHEDULE MANAGEMENT · QUEUE · PATIENT TRACKER
             </p>
           </div>
           <div className="flex items-center gap-5">
             <div className="text-center">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">On-duty Doctors</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">On-Duty Doctors</p>
               <p className="text-2xl font-black text-[#137dab]">{doctors.length}</p>
             </div>
             <div className="w-px h-8 bg-slate-200" />
@@ -793,7 +793,7 @@ export default function ReceptionistDashboard() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
               <div className="flex items-center justify-between w-full sm:w-auto">
                 <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
-                  <Activity className="w-4 h-4 text-[#137dab]" /> Arrival Flow & Queue
+                  <Activity className="w-4 h-4 text-[#137dab]" /> ARRIVAL FLOW & QUEUE
                 </h2>
                 {!selectedSlotId && (
                   <p className="text-[10px] font-bold text-slate-400 mt-1 ml-10 uppercase tracking-widest">
@@ -806,11 +806,11 @@ export default function ReceptionistDashboard() {
                   onClick={() => setShowWalkIn(true)}
                   className="px-3 py-1.5 bg-[#137dab] text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#137dab]/90 transition-all flex items-center gap-1.5 shadow-sm"
                 >
-                  <Users className="w-3.5 h-3.5" /> + Add Walk-in
+                  <Users className="w-3.5 h-3.5" /> + ADD WALK-IN
                 </button>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  {liveQueue.length} Present
+                  {liveQueue.length} PRESENT
                 </div>
                 {selectedSlotId && (
                   <button
