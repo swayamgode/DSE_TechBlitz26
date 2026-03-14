@@ -369,8 +369,10 @@ export default function ReceptionistDashboard() {
       setTimeout(() => { setActivatingTemplate(null); setFormSuccess(false); setSelectedSlotId(slotId as any); }, 1200);
     } catch (err: any) {
       const raw: string = err?.data?.message ?? err?.message ?? "";
-      const match = raw.match(/Uncaught Error:\s*(.+?)(?:\s+at handler|\s+Called by|$)/s);
-      setFormError(match ? match[1].trim() : "Could not activate slot. Please try again.");
+      const clean = raw.includes("Uncaught Error:")
+        ? raw.split("Uncaught Error:")[1]?.split(" at handler")[0]?.split(" Called by")[0]?.trim()
+        : raw.trim();
+      setFormError(clean || "Could not activate slot. Please try again.");
     } finally {
       setFormLoading(false);
     }
@@ -395,7 +397,7 @@ export default function ReceptionistDashboard() {
     try {
       await updateSlot({
         slotId: editingSlotId as any,
-        date: slot.date,
+        date: slot.date ?? todayStr(),
         startTime: slot.startTime,
         endTime: slot.endTime,
         regularSlots: Number(formReg),
