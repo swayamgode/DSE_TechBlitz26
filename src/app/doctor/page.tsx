@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import {
   Activity, LogOut, CheckCircle2, User, Stethoscope, Clock, Users,
   ChevronDown, ChevronUp, Heart, Pill, AlertTriangle, Droplets,
   Phone, FileText, ShieldCheck, Coffee, History, Loader2,
-  Thermometer, Calendar, ChevronRight, X,
+  Thermometer, Calendar, ChevronRight, X, ClipboardList,
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -46,6 +46,29 @@ function ConditionPill({ label, active, color }: { label: string; active: boolea
   );
 }
 
+// ── Hashing helper (Shared with server logic) ──────────────────────────────────
+function calculateChecksum(data: any) {
+  const content = JSON.stringify({
+    p: data.patientId,
+    d: data.isDiabetic,
+    h: data.isHypertensive,
+    hd: data.hasHeartDisease,
+    as: data.hasAsthma,
+    c: data.conditions || "",
+    a: data.allergies || "",
+    m: data.currentMedications || "",
+    n: data.notes || "",
+  });
+
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = (hash & hash); 
+  }
+  return "hash-" + Math.abs(hash).toString(16).slice(0, 32);
+}
+
 // ── Full Medical Info Panel ───────────────────────────────────────────────────
 function MedicalInfoPanel({ info, compact = false }: { info: MedicalInfo; compact?: boolean }) {
   const [showHistory, setShowHistory] = useState(false);
@@ -66,10 +89,23 @@ function MedicalInfoPanel({ info, compact = false }: { info: MedicalInfo; compac
     );
   }
 
+  const generatedHash = calculateChecksum(info);
+  const isVerified = info.checksum === generatedHash;
+
   const hasConditions = info.isDiabetic || info.isHypertensive || info.hasHeartDisease || info.hasAsthma;
 
   return (
     <div className="space-y-5">
+      {/* Integrity Alert if tampered */}
+      {!isVerified && info.checksum && (
+        <div className="bg-rose-50 border border-rose-200 text-rose-700 p-3 rounded-xl flex items-center gap-3 text-[11px] font-bold mb-2 animate-pulse">
+          <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0" />
+          <div className="flex-1">
+            <p className="uppercase tracking-widest">Tamper Alert</p>
+            <p className="text-[9px] opacity-70 mt-0.5">Block-hash mismatch. Data integrity cannot be verified in this instance.</p>
+          </div>
+        </div>
+      )}
 
       {/* ── Demographics row ── */}
       <div>
@@ -297,15 +333,26 @@ export default function DoctorDashboard() {
   const currentSlot = useQuery(api.slots.getCurrentSlot);
   const liveQueue = useQuery(api.queue.getLiveQueue, {}) || [];
   const nextPatient = liveQueue[0] ?? null;
-  const [showMed, setShowMed] = useState(true); // default open — show medical info immediately
+  const [showMed, setShowMed] = useState(true); 
+  const [patientNotes, setPatientNotes] = useState("");
 
   const callPatient = useMutation(api.queue.callPatient);
   const completeConsultation = useMutation(api.queue.removeFromQueue);
+  const saveNotes = useMutation(api.medicalInfo.saveConsultationNotes);
   const [processing, setProcessing] = useState(false);
 
   const userId = typeof window !== "undefined" ? localStorage.getItem("healthdesk_userId") : null;
   const doctor = useQuery(api.users.getUser, { userId: userId as Id<"users"> });
   const setBreak = useMutation(api.users.setBreakStatus);
+
+  // Sync notes when patient changes or consultation starts
+  useEffect(() => {
+    if (nextPatient?.status === "Consulting" && nextPatient.medicalInfo?.notes) {
+      setPatientNotes(nextPatient.medicalInfo.notes);
+    } else if (nextPatient?.status !== "Consulting") {
+      setPatientNotes("");
+    }
+  }, [nextPatient?._id, nextPatient?.status]);
 
   const handleCallPatient = async () => {
     if (!nextPatient) return;
@@ -314,6 +361,11 @@ export default function DoctorDashboard() {
       if (nextPatient.status === "Waiting") {
         await callPatient({ queueId: nextPatient._id });
       } else {
+        // Save notes before finishing
+        await saveNotes({ 
+          patientId: nextPatient.patientId as Id<"users">, 
+          notes: patientNotes 
+        });
         await completeConsultation({ queueId: nextPatient._id, status: "completed" });
       }
     } catch (err) {
@@ -479,6 +531,21 @@ export default function DoctorDashboard() {
                           <CheckCircle2 className="w-3 h-3" /> Clear
                         </span>
                       )}
+                    </div>
+                  )}
+
+                  {/* Consultation Notes (Only when consulting) */}
+                  {isConsulting && (
+                    <div className="p-5 bg-emerald-50/30 border-b border-emerald-100 space-y-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-1.5">
+                        <ClipboardList className="w-3.5 h-3.5" /> Consultation Notes
+                      </p>
+                      <textarea
+                        value={patientNotes}
+                        onChange={(e) => setPatientNotes(e.target.value)}
+                        placeholder="Type clinical observations, diagnosis, or prescription notes here..."
+                        className="w-full h-32 p-4 rounded-xl border border-emerald-200 bg-white text-sm font-medium focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all resize-none shadow-sm placeholder:text-slate-300"
+                      />
                     </div>
                   )}
 

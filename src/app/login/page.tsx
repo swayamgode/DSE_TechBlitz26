@@ -328,7 +328,16 @@ export default function LoginPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Blood Type</Label>
-                    <Input value={bloodType} onChange={(e) => setBloodType(e.target.value)} placeholder="e.g. O+" className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold uppercase rounded-lg" />
+                    <Select value={bloodType} onValueChange={(v) => v && setBloodType(v)}>
+                      <SelectTrigger className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg data-[placeholder]:text-slate-400">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg p-1 text-slate-800 text-xs">
+                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(t => (
+                          <SelectItem key={t} value={t} className="cursor-pointer rounded-md focus:bg-slate-100 font-semibold">{t}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
                     <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Emergency Ph.</Label>

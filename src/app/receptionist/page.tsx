@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
+import { Id } from "../../../convex/_generated/dataModel";
 import { QRCodeSVG } from "qrcode.react";
 
 // ── Predefined non-overlapping clinic slot templates ───────────────────────────
@@ -421,10 +422,190 @@ export default function ReceptionistDashboard() {
   // Count how many templates are active for the selected date
   const activeCount = SLOT_TEMPLATES.filter((t) => getActiveSlot(t) !== null).length;
 
-  return (
-    <div className="min-h-screen font-sans bg-slate-50 text-slate-800">
+  // ── Walk-in State ──
+  const [showWalkIn, setShowWalkIn] = useState(false);
+  const [walkInName, setWalkInName] = useState("");
+  const [walkInType, setWalkInType] = useState<"regular" | "priority">("regular");
+  const [walkInSlotId, setWalkInSlotId] = useState<string>("");
+  const [walkInAge, setWalkInAge] = useState("");
+  const [walkInGender, setWalkInGender] = useState("");
+  const [walkInBlood, setWalkInBlood] = useState("");
+  const [walkInLoading, setWalkInLoading] = useState(false);
+  const [walkInError, setWalkInError] = useState("");
 
-      {/* ── Navbar ── */}
+  const registerWalkIn = useMutation(api.users.registerWalkIn);
+  const saveMed = useMutation(api.medicalInfo.saveMedicalInfo);
+  const bookSlot = useMutation(api.appointments.bookSlot);
+
+  const handleWalkInSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!walkInName || !walkInSlotId) return;
+    setWalkInLoading(true);
+    setWalkInError("");
+    try {
+      const patientId = await registerWalkIn({ name: walkInName }) as Id<"users">;
+      
+      // Save initial medical particulars
+      await saveMed({
+        patientId,
+        age: walkInAge ? parseInt(walkInAge) : undefined,
+        gender: walkInGender || undefined,
+        bloodType: walkInBlood || undefined,
+        isDiabetic: false,
+        isHypertensive: false,
+        hasHeartDisease: false,
+        hasAsthma: false,
+      });
+
+      await bookSlot({
+        userId: patientId,
+        slotId: walkInSlotId as Id<"slots">,
+        type: walkInType
+      });
+
+      // Success - reset
+      setShowWalkIn(false);
+      setWalkInName("");
+      setWalkInAge("");
+      setWalkInGender("");
+      setWalkInBlood("");
+      setWalkInError("");
+    } catch (err: any) {
+      setWalkInError(err.message || "Failed to add walk-in");
+    } finally {
+      setWalkInLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen font-sans bg-slate-50 text-slate-900 relative overflow-hidden flex flex-col">
+      {/* Walk-in Modal */}
+      {showWalkIn && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="bg-[#137dab] p-6 text-white relative">
+              <button onClick={() => { setShowWalkIn(false); setWalkInError(""); }} className="absolute top-6 right-6 p-1 rounded-full hover:bg-white/20 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+              <h3 className="text-xl font-black tracking-tight">Quick Walk-in</h3>
+              <p className="text-white/60 text-[10px] font-bold uppercase tracking-widest mt-1">Register & Queue Patient</p>
+            </div>
+            
+            <form onSubmit={handleWalkInSubmit} className="p-6 space-y-5">
+              {walkInError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold uppercase flex items-center gap-2">
+                  <X className="w-3.5 h-3.5" /> {walkInError}
+                </div>
+              )}
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Patient Name</label>
+                <input 
+                  autoFocus
+                  required
+                  value={walkInName}
+                  onChange={(e) => setWalkInName(e.target.value)}
+                  placeholder="e.g. John Doe"
+                  className="w-full h-12 px-4 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 focus:outline-none focus:border-[#137dab]/50 focus:ring-2 focus:ring-[#137dab]/10 transition-all shadow-inner"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Age</label>
+                  <input 
+                    type="number"
+                    value={walkInAge}
+                    onChange={(e) => setWalkInAge(e.target.value)}
+                    placeholder="25"
+                    className="w-full h-11 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 outline-none"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Gender</label>
+                  <select 
+                    value={walkInGender}
+                    onChange={(e) => setWalkInGender(e.target.value)}
+                    className="w-full h-11 px-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-900 outline-none"
+                  >
+                    <option value="">Select</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Blood</label>
+                  <select 
+                    value={walkInBlood}
+                    onChange={(e) => setWalkInBlood(e.target.value)}
+                    className="w-full h-11 px-2 rounded-xl border border-slate-200 bg-slate-50 text-[11px] font-bold text-slate-900 outline-none"
+                  >
+                    <option value="">Select</option>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(v => (
+                      <option key={v} value={v}>{v}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Slot & Time</label>
+                  <select 
+                    required
+                    value={walkInSlotId}
+                    onChange={(e) => setWalkInSlotId(e.target.value)}
+                    className="w-full h-12 px-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold text-slate-900 outline-none focus:border-[#137dab]"
+                  >
+                    <option value="">Select Slot</option>
+                    {slots.filter(s => (s.date === selectedDate || (!s.date && selectedDate === todayStr()))).map(s => (
+                      <option key={s._id} value={s._id}>{s.startTime} - {s.endTime}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Queue Type</label>
+                  <div className="flex bg-slate-100 p-1 rounded-xl h-12">
+                    <button 
+                      type="button"
+                      onClick={() => setWalkInType("regular")}
+                      className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${walkInType === "regular" ? "bg-white text-[#137dab] shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                    >
+                      Regular
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setWalkInType("priority")}
+                      className={`flex-1 rounded-lg text-[9px] font-black uppercase transition-all ${walkInType === "priority" ? "bg-white text-amber-600 shadow-sm" : "text-slate-400 hover:text-slate-600"}`}
+                    >
+                      Priority
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-2 flex gap-3">
+                <Button 
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setShowWalkIn(false)}
+                  className="flex-1 h-12 font-black uppercase tracking-widest text-[10px]"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={walkInLoading}
+                  className="flex-2 h-12 bg-[#137dab] hover:bg-[#137dab]/90 text-white font-black uppercase tracking-widest text-[10px] rounded-xl shadow-[0_4px_12px_rgba(19,125,171,0.25)]"
+                >
+                  {walkInLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Register & Queue"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       <header className="px-6 h-16 flex items-center justify-between sticky top-0 z-50 bg-white border-b border-slate-200 shadow-sm">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-[#137dab]/10 rounded-lg">
@@ -610,30 +791,25 @@ export default function ReceptionistDashboard() {
 
             {/* Queue header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 bg-white border border-slate-200 rounded-xl shadow-sm">
-              <div>
-                <h2 className="text-xl font-black text-slate-900 flex items-center gap-2">
-                  <span className="w-8 h-8 rounded-lg bg-[#137dab]/10 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-[#137dab]" />
-                  </span>
-                  Live Arrival Queue
+              <div className="flex items-center justify-between w-full sm:w-auto">
+                <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#137dab]" /> Arrival Flow & Queue
                 </h2>
-                {selectedSlotId && (() => {
-                  const s = slots.find((s: any) => s._id === selectedSlotId);
-                  return s ? (
-                    <p className="text-[10px] font-bold text-slate-400 mt-1 ml-10 uppercase tracking-widest">
-                      Showing · {s.startTime} — {s.endTime} · {s.date || "Today"}
-                    </p>
-                  ) : null;
-                })()}
                 {!selectedSlotId && (
                   <p className="text-[10px] font-bold text-slate-400 mt-1 ml-10 uppercase tracking-widest">
                     All patients checked in today
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-[#137dab] text-white rounded-lg text-[10px] font-black uppercase tracking-widest shadow-sm">
-                  <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setShowWalkIn(true)}
+                  className="px-3 py-1.5 bg-[#137dab] text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-[#137dab]/90 transition-all flex items-center gap-1.5 shadow-sm"
+                >
+                  <Users className="w-3.5 h-3.5" /> + Add Walk-in
+                </button>
+                <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   {liveQueue.length} Present
                 </div>
                 {selectedSlotId && (

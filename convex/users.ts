@@ -30,6 +30,25 @@ export const register = mutation({
   },
 });
 
+export const registerWalkIn = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("name"), args.name))
+      .first();
+
+    if (existing) return existing._id;
+
+    return await ctx.db.insert("users", {
+      name: args.name,
+      role: "patient",
+      // Generated temporary password or just leave optional
+      password: "walk-in-patient", 
+    });
+  },
+});
+
 export const login = mutation({
   args: {
     name: v.string(),

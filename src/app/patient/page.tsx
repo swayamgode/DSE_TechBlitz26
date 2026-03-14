@@ -105,6 +105,7 @@ export default function PatientDashboard() {
   const [currentMedications, setCurrentMedications] = useState("");
   const [notes, setNotes] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
+  const [emergencyPhone, setEmergencyPhone] = useState("");
 
   useEffect(() => {
     if (existingMed) {
@@ -123,7 +124,7 @@ export default function PatientDashboard() {
       const ec = existingMed.emergencyContact ?? "";
       if (ec.includes(" — ")) {
         const parts = ec.split(" — ");
-        setPhone(parts[1] ?? "");
+        setEmergencyPhone(parts[1] ?? "");
         setEmergencyContact(parts[0] ?? "");
       } else {
         setEmergencyContact(ec);
@@ -134,10 +135,10 @@ export default function PatientDashboard() {
   const handleSave = async () => {
     if (!userId) return;
     const combinedContact = emergencyContact
-      ? phone
-        ? `${emergencyContact} — ${phone}`
+      ? emergencyPhone
+        ? `${emergencyContact} — ${emergencyPhone}`
         : emergencyContact
-      : phone;
+      : emergencyPhone;
 
     await saveMed({
       patientId: userId,
@@ -446,8 +447,8 @@ export default function PatientDashboard() {
                   </label>
                   <input
                     type="tel"
-                    value={phone && emergencyContact ? phone : ""}
-                    onChange={e => setPhone(e.target.value)}
+                    value={emergencyPhone}
+                    onChange={e => setEmergencyPhone(e.target.value)}
                     placeholder="e.g. +91 98765 43210"
                     className={inputCls}
                   />

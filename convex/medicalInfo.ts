@@ -29,6 +29,7 @@ export const saveMedicalInfo = mutation({
       c: args.conditions || "",
       a: args.allergies || "",
       m: args.currentMedications || "",
+      n: args.notes || "",
     });
 
     // Simple hashing for demonstration in the prototype 
@@ -106,6 +107,74 @@ export const saveMedicalInfo = mutation({
         version: newVersion,
       });
     }
+  },
+});
+
+// Save consultation notes (simplified update for doctors)
+export const saveConsultationNotes = mutation({
+  args: {
+    patientId: v.id("users"),
+    notes: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("medicalInfo")
+      .withIndex("by_patient", (q) => q.eq("patientId", args.patientId))
+      .first();
+
+    if (!existing) {
+       // Create minimal record if none exists
+       return await ctx.db.insert("medicalInfo", {
+         patientId: args.patientId,
+         isDiabetic: false,
+         isHypertensive: false,
+         hasHeartDisease: false,
+         hasAsthma: false,
+         notes: args.notes,
+         version: 1,
+       });
+    }
+
+    const newVersion = (existing.version ?? 0) + 1;
+    const timestamp = new Date().toISOString();
+
+    // Re-hash with new notes
+    const content = JSON.stringify({
+      p: existing.patientId,
+      d: existing.isDiabetic,
+      h: existing.isHypertensive,
+      hd: existing.hasHeartDisease,
+      as: existing.hasAsthma,
+      c: existing.conditions || "",
+      a: existing.allergies || "",
+      m: existing.currentMedications || "",
+      n: args.notes || "",
+    });
+
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+        const char = content.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    const checksum = "hash-" + Math.abs(hash).toString(16).slice(0, 32);
+
+    await ctx.db.patch(existing._id, {
+      notes: args.notes,
+      checksum,
+      lastVerified: timestamp,
+      version: newVersion,
+    });
+
+    // Audit log
+    await ctx.db.insert("medicalAudit", {
+      patientId: args.patientId,
+      timestamp,
+      checksum,
+      version: newVersion,
+      data: content,
+      blockIndex: 0, // Simplified for now
+    });
   },
 });
 
