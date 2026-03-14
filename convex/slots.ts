@@ -58,6 +58,15 @@ export const getSlotsWithAvailability = query({
   },
 });
 
+// Helper: convert "09:00 AM" / "01:30 PM" → total minutes since midnight
+function parseTimeMins(timeStr: string): number {
+  const [time, modifier] = timeStr.split(" ");
+  let [h, m] = time.split(":").map(Number);
+  if (modifier === "PM" && h !== 12) h += 12;
+  if (modifier === "AM" && h === 12) h = 0;
+  return h * 60 + m;
+}
+
 // Allow Receptionist to manually create slots
 export const createSlot = mutation({
   args: {
@@ -68,6 +77,39 @@ export const createSlot = mutation({
     prioritySlots: v.number(),
   },
   handler: async (ctx, args) => {
+    const newStart = parseTimeMins(args.startTime);
+    const newEnd   = parseTimeMins(args.endTime);
+
+    // 1. End must be after start
+    if (newEnd <= newStart) {
+      throw new Error("End time must be after start time.");
+    }
+
+    // 2. Check all existing slots on the same date for conflicts
+    const existing = await ctx.db
+      .query("slots")
+      .filter((q) => q.eq(q.field("date"), args.date))
+      .collect();
+
+    for (const slot of existing) {
+      const exStart = parseTimeMins(slot.startTime);
+      const exEnd   = parseTimeMins(slot.endTime);
+
+      // Exact duplicate
+      if (slot.startTime === args.startTime && slot.endTime === args.endTime) {
+        throw new Error(
+          `A slot already exists for ${args.startTime} – ${args.endTime} on this date.`
+        );
+      }
+
+      // Overlap: new slot starts before existing ends AND new slot ends after existing starts
+      if (newStart < exEnd && newEnd > exStart) {
+        throw new Error(
+          `This slot (${args.startTime} – ${args.endTime}) conflicts with an existing slot (${slot.startTime} – ${slot.endTime}) on ${args.date}.`
+        );
+      }
+    }
+
     return await ctx.db.insert("slots", {
       date: args.date,
       startTime: args.startTime,
