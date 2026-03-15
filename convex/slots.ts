@@ -193,6 +193,8 @@ export const getCurrentSlot = query({
       ))
       .collect();
 
+    if (slots.length === 0) return null;
+
     const parseTime = (timeStr: string) => {
       const [time, modifier] = timeStr.split(' ');
       let [h, m] = time.split(':').map(Number);
@@ -214,6 +216,14 @@ export const getCurrentSlot = query({
     const upcomingSlots = slots.filter(s => parseTime(s.startTime) > nowMinutes)
       .sort((a, b) => parseTime(a.startTime) - parseTime(b.startTime));
 
-    return upcomingSlots[0] || slots[slots.length - 1] || null;
+    if (upcomingSlots.length > 0) return upcomingSlots[0];
+
+    // If no upcoming slots, check if we are past the last slot of the day
+    const lastSlot = slots.reduce((prev, current) => (parseTime(prev.endTime) > parseTime(current.endTime)) ? prev : current, slots[0]);
+    if (lastSlot && nowMinutes >= parseTime(lastSlot.endTime)) {
+      return null;
+    }
+
+    return lastSlot || null;
   },
 });

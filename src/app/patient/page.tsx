@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Activity, Calendar, Clock, LogOut, QrCode, Heart, Save, CheckCircle2, User, AlertCircle, ChevronDown, Phone, Droplets } from "lucide-react";
+import { 
+  Activity, Calendar, Clock, LogOut, QrCode, Heart, Save, CheckCircle2, User, 
+  AlertCircle, ChevronDown, Phone, Droplets, Upload, FileText, Image as ImageIcon, Trash2, Loader2, File
+} from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 import { Id } from "../../../convex/_generated/dataModel";
@@ -106,6 +109,63 @@ export default function PatientDashboard() {
   const [notes, setNotes] = useState("");
   const [emergencyContact, setEmergencyContact] = useState("");
   const [emergencyPhone, setEmergencyPhone] = useState("");
+  
+  // File Upload State
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const generateUploadUrl = useMutation(api.medicalFiles.generateUploadUrl);
+  const saveFileMetadata = useMutation(api.medicalFiles.saveFileMetadata);
+  const deleteFile = useMutation(api.medicalFiles.deleteFile);
+  const userFiles = useQuery(api.medicalFiles.getFiles, userId ? { patientId: userId } : "skip");
+
+  const calculateHash = async (file: File) => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  };
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !userId) return;
+
+    setIsUploading(true);
+    setUploadError("");
+
+    try {
+      // 1. Calculate integrity hash (Blockchain requirement)
+      const checksum = await calculateHash(file);
+
+      // 2. Get upload URL
+      const postUrl = await generateUploadUrl();
+
+      // 3. Post to storage
+      const result = await fetch(postUrl, {
+        method: "POST",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!result.ok) throw new Error("Upload failed");
+      
+      const { storageId } = await result.json();
+
+      // 4. Save metadata to DB
+      await saveFileMetadata({
+        patientId: userId,
+        storageId,
+        fileName: file.name,
+        fileType: file.type,
+        checksum: `sha256-${checksum}`,
+      });
+
+    } catch (err: any) {
+      console.error(err);
+      setUploadError(err.message || "Failed to upload file");
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     if (existingMed) {
@@ -392,6 +452,70 @@ export default function PatientDashboard() {
                 <ConditionTag label="Hypertension" checked={isHypertensive} onChange={setIsHypertensive} />
                 <ConditionTag label="Cardiac Complications" checked={hasHeartDisease} onChange={setHasHeartDisease} />
                 <ConditionTag label="Respiratory / Asthma" checked={hasAsthma} onChange={setHasAsthma} />
+              </div>
+            </div>
+
+            {/* Section: Medical Documents (New) */}
+            <div className="p-6 border-b border-slate-100 bg-slate-50/30">
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2">
+                  <div className="w-1 h-4 bg-[#137dab] rounded-full" />
+                  <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500">Medical Documents</h3>
+                </div>
+                
+                <label className="cursor-pointer">
+                  <input type="file" className="hidden" onChange={handleUpload} disabled={isUploading} accept=".pdf,image/*" />
+                  <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isUploading ? 'bg-slate-100 text-slate-400' : 'bg-white border border-slate-200 text-[#137dab] hover:bg-[#137dab] hover:text-white shadow-sm'}`}>
+                    {isUploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    {isUploading ? "Uploading..." : "Upload Document"}
+                  </div>
+                </label>
+              </div>
+
+              {uploadError && (
+                <div className="mb-4 p-3 bg-rose-50 border border-rose-100 text-rose-600 text-[10px] font-bold rounded-lg flex items-center gap-2 uppercase tracking-tight">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {uploadError}
+                </div>
+              )}
+
+              <div className="grid sm:grid-cols-2 gap-4">
+                {!userFiles || userFiles.length === 0 ? (
+                  <div className="col-span-2 py-8 border-2 border-dashed border-slate-100 rounded-2xl flex flex-col items-center justify-center text-slate-300">
+                    <FileText className="w-8 h-8 mb-2 opacity-20" />
+                    <p className="text-[10px] font-black uppercase tracking-widest">No documents uploaded yet</p>
+                  </div>
+                ) : (
+                  userFiles.map((file: any) => (
+                    <div key={file._id} className="bg-white border border-slate-100 rounded-xl p-4 flex items-start gap-4 shadow-sm hover:shadow-md transition-all group">
+                       <div className="p-2.5 bg-slate-50 rounded-lg text-slate-400 group-hover:bg-[#137dab]/5 group-hover:text-[#137dab] transition-colors">
+                          {file.fileType.includes("image") ? <ImageIcon className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
+                       </div>
+                       <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between">
+                             <a href={file.url ?? "#"} target="_blank" rel="noreferrer" className="text-sm font-bold text-slate-800 truncate hover:text-[#137dab] transition-colors">
+                                {file.fileName}
+                             </a>
+                             <button 
+                               onClick={() => deleteFile({ fileId: file._id, storageId: file.storageId })}
+                               className="p-1 text-slate-300 hover:text-rose-500 transition-colors"
+                             >
+                                <Trash2 className="w-3.5 h-3.5" />
+                             </button>
+                          </div>
+                          <div className="flex flex-col gap-1 mt-1">
+                             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                                Uploaded {new Date(file.timestamp).toLocaleDateString()}
+                             </p>
+                             <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-md border border-emerald-100 w-fit">
+                                <CheckCircle2 className="w-2.5 h-2.5" />
+                                <span className="text-[8px] font-black uppercase truncate max-w-[120px]">{file.checksum}</span>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

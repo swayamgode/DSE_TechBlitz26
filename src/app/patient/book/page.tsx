@@ -14,7 +14,37 @@ export default function BookSlotPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
-  const slots = useQuery(api.slots.getSlotsWithAvailability) || [];
+  const allSlots = useQuery(api.slots.getSlotsWithAvailability);
+  
+  // Filter for today and future slots
+  const d = new Date();
+  const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const nowMins = d.getHours() * 60 + d.getMinutes();
+
+  const parseMins = (timeStr: string) => {
+    if (!timeStr) return 0;
+    try {
+      const parts = timeStr.split(' ');
+      if (parts.length < 2) return 0;
+      const [time, modifier] = parts;
+      let [h, m] = time.split(':').map(Number);
+      if (modifier === 'PM' && h !== 12) h += 12;
+      if (modifier === 'AM' && h === 12) h = 0;
+      return (h * 60) + m;
+    } catch (e) {
+      return 0;
+    }
+  };
+
+  const isLoading = allSlots === undefined;
+  const slots = allSlots?.filter((s: any) => {
+    if (!s.date) return true; // Show legacy slots without date
+    
+    // Show all of today's slots, and all future slots.
+    // Only filter out slots from previous days.
+    return s.date >= todayStr;
+  }) || [];
+
   const bookSlotMut = useMutation(api.appointments.bookSlot);
   const currentUserId = typeof window !== "undefined" ? localStorage.getItem("healthdesk_userId") : null;
 
@@ -108,64 +138,83 @@ export default function BookSlotPage() {
         </div>
 
         {/* Slot Grid */}
-        {slots.length === 0 ? (
+        {isLoading ? (
           <div className="flex flex-col items-center justify-center py-24 text-center">
             <Loader2 className="w-8 h-8 text-[#137dab] animate-spin mb-4" />
-            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Loading available slots...</p>
+            <p className="text-slate-400 font-black uppercase tracking-widest text-[10px]">Synchronizing slots...</p>
+          </div>
+        ) : slots.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-white border border-dashed border-slate-200 rounded-3xl">
+            <Calendar className="w-12 h-12 text-slate-200 mb-4" />
+            <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest">No available slots</h3>
+            <p className="text-[10px] font-bold text-slate-300 mt-1 uppercase max-w-xs leading-relaxed">
+              No sessions found for today or upcoming dates. 
+              Please contact the clinic or check back later.
+            </p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {slots.map((slot: any, idx: number) => {
-              const isAvailable = slotType === "regular" ? slot.availableRegular > 0 : slot.availablePriority > 0;
-              const isSelected = selectedSlot?._id === slot._id;
-              const count = slotType === "regular" ? slot.availableRegular : slot.availablePriority;
+          <div className="space-y-6">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-[#137dab]/5 text-[#137dab] rounded-lg border border-[#137dab]/10 w-fit">
+              <Info className="w-3.5 h-3.5" />
+              <span className="text-[9px] font-black uppercase tracking-widest">Showing {slots.length} available sessions for today onwards</span>
+            </div>
 
-              return (
-                <div
-                  key={slot._id}
-                  onClick={() => isAvailable && setSelectedSlot(slot)}
-                  style={{ animationDelay: `${idx * 40}ms` }}
-                  className={`relative bg-white border rounded-2xl p-5 transition-all duration-200 overflow-hidden ${
-                    !isAvailable
-                      ? "opacity-40 grayscale pointer-events-none border-slate-200"
-                      : isSelected
-                      ? "border-[#137dab] shadow-[0_0_0_3px_rgba(19,125,171,0.15)] cursor-pointer"
-                      : "border-slate-200 shadow-sm hover:shadow-md hover:border-[#137dab]/40 cursor-pointer hover:-translate-y-0.5"
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-3 right-3">
-                      <div className="w-5 h-5 bg-[#137dab] rounded-full flex items-center justify-center">
-                        <CheckCircle2 className="w-3 h-3 text-white" />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">
-                    <Calendar className="w-3 h-3" /> {slot.date || "Today"}
-                  </div>
-
-                  <div className="flex items-center gap-2 mb-1">
-                    <Clock className="w-4 h-4 text-[#137dab]" />
-                    <span className="text-xl font-black tracking-tight text-slate-900">{slot.startTime}</span>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 ml-6">until {slot.endTime}</p>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
-                      {slotType === "regular" ? "Regular" : "Priority"} slots
-                    </span>
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {slots.map((slot: any, idx: number) => {
+                const isAvailable = slotType === "regular" ? slot.availableRegular > 0 : slot.availablePriority > 0;
+                const isSelected = selectedSlot?._id === slot._id;
+                const count = slotType === "regular" ? slot.availableRegular : slot.availablePriority;
+                
+                // Optional: mark past slots of TODAY differently?
+                // For now, just show them all.
+                
+                return (
+                  <div
+                    key={slot._id}
+                    onClick={() => isAvailable && setSelectedSlot(slot)}
+                    style={{ animationDelay: `${idx * 40}ms` }}
+                    className={`relative bg-white border rounded-2xl p-5 transition-all duration-200 overflow-hidden ${
                       !isAvailable
-                        ? "bg-rose-50 text-rose-500 border border-rose-200"
-                        : "bg-[#137dab]/10 text-[#137dab] border border-[#137dab]/20"
-                    }`}>
-                      {count} left
-                    </span>
+                        ? "opacity-40 grayscale pointer-events-none border-slate-200"
+                        : isSelected
+                        ? "border-[#137dab] shadow-[0_0_0_3px_rgba(19,125,171,0.15)] cursor-pointer"
+                        : "border-slate-200 shadow-sm hover:shadow-md hover:border-[#137dab]/40 cursor-pointer hover:-translate-y-0.5"
+                    }`}
+                  >
+                    {isSelected && (
+                      <div className="absolute top-3 right-3">
+                        <div className="w-5 h-5 bg-[#137dab] rounded-full flex items-center justify-center">
+                          <CheckCircle2 className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                      <Calendar className="w-3 h-3" /> {slot.date === todayStr ? "Today" : slot.date || "Template"}
+                    </div>
+
+                    <div className="flex items-center gap-2 mb-1">
+                      <Clock className="w-4 h-4 text-[#137dab]" />
+                      <span className="text-xl font-black tracking-tight text-slate-900">{slot.startTime}</span>
+                    </div>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-4 ml-6">until {slot.endTime}</p>
+
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        {slotType === "regular" ? "Regular" : "Priority"}
+                      </span>
+                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide ${
+                        !isAvailable
+                          ? "bg-rose-50 text-rose-500 border border-rose-200"
+                          : "bg-[#137dab]/10 text-[#137dab] border border-[#137dab]/20"
+                      }`}>
+                        {count} seats
+                      </span>
+                    </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
         )}
 

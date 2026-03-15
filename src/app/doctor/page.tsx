@@ -9,6 +9,7 @@ import {
   ChevronDown, ChevronUp, Heart, Pill, AlertTriangle, Droplets,
   Phone, FileText, ShieldCheck, Coffee, History, Loader2,
   Thermometer, Calendar, ChevronRight, X, ClipboardList,
+  Download, Image as ImageIcon, ExternalLink
 } from "lucide-react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
@@ -67,6 +68,50 @@ function calculateChecksum(data: any) {
     hash = (hash & hash); 
   }
   return "hash-" + Math.abs(hash).toString(16).slice(0, 32);
+}
+
+// ── Medical Documents Section ───────────────────────────────────────────────
+function MedicalDocumentsSection({ patientId }: { patientId: Id<"users"> }) {
+  const files = useQuery(api.medicalFiles.getFiles, { patientId });
+
+  if (!files || files.length === 0) return null;
+
+  return (
+    <div className="space-y-3">
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1.5">
+        <FileText className="w-3 h-3 text-[#137dab]" /> Medical Records & Media
+      </p>
+      <div className="grid gap-2">
+        {files.map((file: any) => (
+          <div key={file._id} className="p-3 bg-white border border-slate-100 rounded-xl flex items-center justify-between gap-4 group hover:border-[#137dab]/20 hover:shadow-sm transition-all">
+             <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 bg-slate-50 rounded-lg text-slate-400 group-hover:bg-[#137dab]/5 group-hover:text-[#137dab] transition-colors">
+                  {file.fileType.includes("image") ? <ImageIcon className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
+                </div>
+                <div className="min-w-0">
+                   <p className="text-[11px] font-bold text-slate-700 truncate">{file.fileName}</p>
+                   <div className="flex items-center gap-2">
+                      <p className="text-[8px] font-bold text-slate-300 uppercase">{new Date(file.timestamp).toLocaleDateString()}</p>
+                      <span className="text-[8px] font-mono text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100/50">
+                        {file.checksum.slice(0, 16)}...
+                      </span>
+                   </div>
+                </div>
+             </div>
+             <a 
+               href={file.url ?? "#"} 
+               target="_blank" 
+               rel="noreferrer"
+               className="p-1.5 text-slate-300 hover:text-[#137dab] hover:bg-[#137dab]/10 rounded-lg transition-all"
+               title="View document"
+             >
+                <ExternalLink className="w-4 h-4" />
+             </a>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // ── Full Medical Info Panel ───────────────────────────────────────────────────
@@ -217,6 +262,9 @@ function MedicalInfoPanel({ info, compact = false }: { info: MedicalInfo; compac
         </div>
       )}
 
+      {/* ── Medical Documents Section (New) ── */}
+      <MedicalDocumentsSection patientId={info.patientId as Id<"users">} />
+
       {/* ── Blockchain / integrity section ── */}
       <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
@@ -269,20 +317,22 @@ function QueuePatientRow({ patient, idx }: { patient: any; idx: number }) {
   return (
     <div className={`border-b border-slate-100 transition-all ${isFirst ? "bg-[#137dab]/3" : "hover:bg-slate-50"}`}>
       <div
-        className="px-5 py-4 flex items-center gap-4 cursor-pointer"
+        className="px-5 py-4 grid grid-cols-12 items-center gap-4 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        {/* Position badge */}
-        <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
-          isFirst
-            ? "bg-[#137dab] text-white shadow-[0_4px_10px_rgba(19,125,171,0.3)]"
-            : "bg-slate-100 text-slate-500"
-        }`}>
-          {idx + 1}
+        {/* Column 1: Position badge */}
+        <div className="col-span-1 text-left">
+          <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs shrink-0 ${
+            isFirst
+              ? "bg-[#137dab] text-white shadow-[0_4px_10px_rgba(19,125,171,0.3)]"
+              : "bg-slate-100 text-slate-500"
+          }`}>
+            {idx + 1}
+          </div>
         </div>
 
-        {/* Name + time */}
-        <div className="flex-1 min-w-0">
+        {/* Column 5: Name + time */}
+        <div className="col-span-10 sm:col-span-5 min-w-0">
           <p className="text-sm font-black text-slate-900 flex items-center gap-1.5">
             {patient.name}
             {med && <Heart className="w-3 h-3 fill-rose-400 text-rose-400" />}
@@ -292,28 +342,36 @@ function QueuePatientRow({ patient, idx }: { patient: any; idx: number }) {
           </p>
         </div>
 
-        {/* Condition flags */}
-        <div className="hidden sm:flex gap-1.5 flex-wrap justify-end">
-          {med?.bloodType && (
-            <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 text-[9px] font-black uppercase rounded-lg flex items-center gap-1">
-              <Droplets className="w-3 h-3" />{med.bloodType}
-            </span>
+        {/* Column 4: Condition flags */}
+        <div className="hidden sm:flex col-span-4 gap-1.5 flex-wrap">
+          {med && (med.bloodType || med.isDiabetic || med.isHypertensive || med.hasHeartDisease || med.hasAsthma) ? (
+            <>
+              {med.bloodType && (
+                <span className="px-2 py-0.5 bg-rose-50 text-rose-600 border border-rose-200 text-[8px] font-black uppercase rounded-lg flex items-center gap-1">
+                  <Droplets className="w-2.5 h-2.5" />{med.bloodType}
+                </span>
+              )}
+              {med.isDiabetic && <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[8px] font-black uppercase rounded-lg">Diabetic</span>}
+              {med.isHypertensive && <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[8px] font-black uppercase rounded-lg">HBP</span>}
+              {med.hasHeartDisease && <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[8px] font-black uppercase rounded-lg">Cardiac</span>}
+              {med.hasAsthma && <span className="px-2 py-0.5 bg-sky-50 text-sky-700 border border-sky-200 text-[8px] font-black uppercase rounded-lg">Asthma</span>}
+            </>
+          ) : (
+            <span className="text-slate-200 font-bold ml-1">—</span>
           )}
-          {med?.isDiabetic && <span className="px-2 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[9px] font-black uppercase rounded-lg">Diabetic</span>}
-          {med?.isHypertensive && <span className="px-2 py-0.5 bg-rose-50 text-rose-700 border border-rose-200 text-[9px] font-black uppercase rounded-lg">HBP</span>}
-          {med?.hasHeartDisease && <span className="px-2 py-0.5 bg-red-50 text-red-700 border border-red-200 text-[9px] font-black uppercase rounded-lg">Cardiac</span>}
-          {med?.hasAsthma && <span className="px-2 py-0.5 bg-sky-50 text-sky-700 border border-sky-200 text-[9px] font-black uppercase rounded-lg">Asthma</span>}
-          <span className={`px-2 py-0.5 text-[9px] font-black uppercase rounded-lg ${
-            patient.type === "Priority"
-              ? "bg-amber-100 text-amber-700 border border-amber-200"
-              : "bg-slate-100 text-slate-500"
-          }`}>{patient.type}</span>
         </div>
 
-        {/* Expand toggle */}
-        <button className="shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-slate-300 hover:text-[#137dab] hover:bg-[#137dab]/10 transition-all">
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        {/* Column 2: Info / Toggle */}
+        <div className="col-span-1 sm:col-span-2 flex items-center justify-end gap-3 pr-1">
+          <span className={`hidden md:block px-2.5 py-1 text-[10px] font-black uppercase rounded-lg transition-all ${
+            patient.type === "Priority"
+              ? "bg-amber-100 text-amber-700 border border-amber-200 shadow-sm"
+              : "bg-slate-50 text-slate-400 border border-slate-100"
+          }`}>{patient.type}</span>
+          <div className="text-slate-300 group-hover:text-[#137dab] transition-colors shrink-0">
+            {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </div>
+        </div>
       </div>
 
       {/* Expanded medical info */}
@@ -442,7 +500,17 @@ export default function DoctorDashboard() {
           </div>
           <div className="flex items-center gap-5">
             <div className="text-center">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Active Slot</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">
+                {(currentSlot && (() => {
+                  const d = new Date();
+                  const now = d.getHours() * 60 + d.getMinutes();
+                  const [time, mod] = currentSlot.startTime.split(' ');
+                  let [h, m] = time.split(':').map(Number);
+                  if (mod === 'PM' && h !== 12) h += 12;
+                  if (mod === 'AM' && h === 12) h = 0;
+                  return now >= (h * 60 + m);
+                })()) ? "Active Slot" : "Upcoming Slot"}
+              </p>
               <p className="text-sm font-black text-[#137dab]">
                 {currentSlot ? `${currentSlot.startTime} – ${currentSlot.endTime}` : "—"}
               </p>
@@ -621,8 +689,8 @@ export default function DoctorDashboard() {
               <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 grid grid-cols-12 text-[10px] font-black uppercase tracking-widest text-slate-400">
                 <div className="col-span-1">#</div>
                 <div className="col-span-5">Patient</div>
-                <div className="col-span-5 hidden sm:block">Flags</div>
-                <div className="col-span-1 text-right">Info</div>
+                <div className="col-span-4 hidden sm:block">Flags</div>
+                <div className="col-span-2 text-right">Info</div>
               </div>
 
               <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto">

@@ -194,18 +194,18 @@ export default function LoginPage() {
         <h1 className="text-3xl font-black tracking-tighter text-slate-800 uppercase underline decoration-4 decoration-[#137dab]/20 underline-offset-8">HealthDesk</h1>
       </div>
 
-      <Card className={`w-full ${isRegister && role === 'patient' ? 'max-w-3xl' : 'max-w-sm'} bg-white p-2 md:p-4 mb-4 relative z-10 animate-reveal shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-slate-200 rounded-3xl transition-all duration-500`} style={{ animationDelay: '100ms' }}>
-        <CardHeader className="space-y-1 text-center pb-4 pt-4">
-          <div className="flex justify-center mb-2">
-             <div className="px-3 py-1 bg-[#137dab]/10 text-[#137dab] rounded-full text-[8px] font-black uppercase tracking-[0.2em] border border-[#137dab]/20">
-                Secure Portal
+      <Card className={`w-full ${isRegister && role === 'patient' ? 'max-w-3xl' : 'max-w-md'} bg-white p-6 relative z-10 animate-reveal shadow-[0_20px_60px_rgba(0,0,0,0.05)] border border-slate-100 rounded-2xl transition-all duration-500`} style={{ animationDelay: '100ms' }}>
+        <CardHeader className="space-y-1 text-center pb-8 pt-0">
+          <div className="flex justify-center mb-4">
+             <div className="px-3 py-1 bg-slate-50 text-slate-500 rounded-full text-[10px] font-bold uppercase tracking-wider border border-slate-100">
+                Healthcare Portal
              </div>
           </div>
-          <CardTitle className="text-xl font-black tracking-tight uppercase text-slate-900 drop-shadow-sm">
-            {isRegister ? "Access Token" : "Identification"}
+          <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
+            {isRegister ? "Create an account" : "Sign in to HealthDesk"}
           </CardTitle>
-          <CardDescription className="text-slate-500 font-bold uppercase text-[10px] tracking-widest leading-relaxed">
-            {isRegister ? "Register new system credentials" : "Confirm identity via secure terminal"}
+          <CardDescription className="text-slate-500 font-medium text-sm leading-relaxed">
+            {isRegister ? "Start managing your healthcare experience" : "Enter your credentials to access the system"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -219,24 +219,24 @@ export default function LoginPage() {
           <form onSubmit={handleAuth} className={`space-y-5 ${isRegister && role === 'patient' ? 'md:flex md:gap-10 md:space-y-0 text-left' : ''}`}>
             
             {/* Column 1: Core Credentials */}
-            <div className={`space-y-5 flex flex-col justify-center ${isRegister && role === 'patient' ? 'md:w-5/12' : ''}`}>
+            <div className={`space-y-6 flex flex-col justify-center ${isRegister && role === 'patient' ? 'md:w-5/12' : ''}`}>
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-                  Username / Alias
+                <Label htmlFor="name" className="text-sm font-semibold text-slate-700 ml-1">
+                  Full Name
                 </Label>
                 <Input 
                   id="name" 
-                  placeholder="TYPE NAME..." 
+                  placeholder="John Doe" 
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="h-10 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-xs placeholder:text-slate-400 font-bold uppercase tracking-wider rounded-lg transition-all bg-slate-50 focus:bg-white focus:ring-[#137dab]/20"
+                  className="h-11 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-sm placeholder:text-slate-400 font-medium rounded-xl transition-all bg-slate-50 focus:bg-white focus:ring-[#137dab]/5"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-                  Hash / Password
+                <Label htmlFor="password" className="text-sm font-semibold text-slate-700 ml-1">
+                  Password
                 </Label>
                 <Input 
                   id="password" 
@@ -244,36 +244,36 @@ export default function LoginPage() {
                   placeholder="••••••••" 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-10 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-xs placeholder:text-slate-400 font-bold tracking-widest rounded-lg transition-all bg-slate-50 focus:bg-white focus:ring-[#137dab]/20"
+                  className="h-11 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-sm placeholder:text-slate-400 font-medium rounded-xl transition-all bg-slate-50 focus:bg-white focus:ring-[#137dab]/5"
                   required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role" className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">
-                  Protocol / Role
+                <Label htmlFor="role" className="text-sm font-semibold text-slate-700 ml-1">
+                  User Role
                 </Label>
                 <Select value={role} onValueChange={(val: any) => setRole(val)} required>
-                  <SelectTrigger className="h-10 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-xs font-bold uppercase tracking-wider rounded-lg bg-slate-50 hover:bg-slate-100/50 focus:bg-white transition-all focus:ring-[#137dab]/20 data-[placeholder]:text-slate-400">
-                    <SelectValue placeholder="System Access Level" />
+                  <SelectTrigger className="h-11 border-slate-200 focus:border-[#137dab]/50 text-slate-900 text-sm font-medium rounded-xl bg-slate-50 hover:bg-slate-100/50 focus:bg-white transition-all focus:ring-[#137dab]/5 data-[placeholder]:text-slate-400">
+                    <SelectValue placeholder="Select your role" />
                   </SelectTrigger>
-                  <SelectContent className="border-slate-200 rounded-lg bg-white shadow-xl text-slate-800 p-1 text-xs">
-                    <SelectItem value="patient" className="font-bold py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer rounded-md mb-1">
-                      <div className="flex items-center gap-2">
-                        <UserRound className="w-3 h-3 text-[#137dab]" />
-                        <span className="uppercase tracking-widest text-[9px]">Patient System</span>
+                  <SelectContent className="border-slate-100 rounded-xl bg-white shadow-2xl text-slate-800 p-2 text-sm">
+                    <SelectItem value="patient" className="font-medium py-3 focus:bg-slate-50 focus:text-[#137dab] cursor-pointer rounded-lg mb-1">
+                      <div className="flex items-center gap-3">
+                        <UserRound className="w-4 h-4 text-[#137dab]" />
+                        <span>Patient</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="doctor" className="font-bold py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer rounded-md mb-1">
-                      <div className="flex items-center gap-2">
-                        <Stethoscope className="w-3 h-3 text-[#137dab]" />
-                        <span className="uppercase tracking-widest text-[9px]">Medical Staff</span>
+                    <SelectItem value="doctor" className="font-medium py-3 focus:bg-slate-50 focus:text-[#137dab] cursor-pointer rounded-lg mb-1">
+                      <div className="flex items-center gap-3">
+                        <Stethoscope className="w-4 h-4 text-[#137dab]" />
+                        <span>Medical Practitioner</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="receptionist" className="font-bold py-2 focus:bg-slate-100 focus:text-slate-900 cursor-pointer rounded-md">
-                      <div className="flex items-center gap-2">
-                        <BriefcaseMedical className="w-3 h-3 text-[#137dab]" />
-                        <span className="uppercase tracking-widest text-[9px]">Admin / Desk</span>
+                    <SelectItem value="receptionist" className="font-medium py-3 focus:bg-slate-50 focus:text-[#137dab] cursor-pointer rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <BriefcaseMedical className="w-4 h-4 text-[#137dab]" />
+                        <span>Receptionist / Staff</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
@@ -284,42 +284,42 @@ export default function LoginPage() {
               {isRegister && role === 'patient' && (
                 <Button 
                   type="submit" 
-                  className="w-full h-10 bg-[#137dab] text-white hover:bg-[#137dab]/90 text-[10px] font-black uppercase tracking-[0.2em] mt-4 rounded-lg shadow-[0_5px_15px_rgba(19,125,171,0.25)] transition-all active:scale-[0.98] active:shadow-sm"
+                  className="w-full h-11 bg-[#137dab] text-white hover:bg-[#137dab]/90 text-sm font-bold mt-4 rounded-xl shadow-lg shadow-[#137dab]/10 transition-all active:scale-[0.98]"
                   disabled={!name || !password || !role || loading}
                 >
-                  {loading ? <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> PROCESSING...</span> : "INIT ACCESS"}
+                  {loading ? <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Starting...</span> : "Create Account"}
                 </Button>
               )}
             </div>
 
             {/* Column 2: Extended Patient Details Container */}
             {isRegister && role === "patient" && (
-              <div className="space-y-4 pt-6 mt-6 border-t md:border-t-0 md:border-l md:pl-10 md:pt-0 md:mt-0 border-slate-100 animate-reveal md:w-7/12">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-8 h-8 rounded-lg bg-[#137dab]/10 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-[#137dab]" />
+              <div className="space-y-6 pt-6 mt-6 border-t md:border-t-0 md:border-l md:pl-10 md:pt-0 md:mt-0 border-slate-100 animate-reveal md:w-7/12">
+                <div className="flex items-center gap-3 mb-2">
+                   <div className="w-10 h-10 rounded-xl bg-[#137dab]/5 flex items-center justify-center">
+                    <Activity className="w-5 h-5 text-[#137dab]" />
                   </div>
                   <div>
-                    <h3 className="text-[12px] font-black uppercase tracking-widest text-slate-800">Patient Intake Form</h3>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Medical baseline (Optional sync)</p>
+                    <h3 className="text-sm font-bold text-slate-800">Medical Information</h3>
+                    <p className="text-[11px] font-medium text-slate-400 mt-0.5">Optional medical history for better care</p>
                   </div>
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Age</Label>
-                    <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="e.g. 28" className="h-9 border-slate-200 bg-slate-50 focus:bg-white focus:border-[#137dab]/50 text-slate-900 text-xs font-bold rounded-lg" />
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Age</Label>
+                    <Input type="number" value={age} onChange={(e) => setAge(e.target.value)} placeholder="e.g. 28" className="h-10 border-slate-200 bg-slate-50 focus:bg-white focus:border-[#137dab]/50 text-slate-900 text-sm font-medium rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Gender</Label>
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Gender</Label>
                     <Select value={gender} onValueChange={(v) => v && setGender(v)}>
-                      <SelectTrigger className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg data-[placeholder]:text-slate-400">
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-medium rounded-xl data-[placeholder]:text-slate-400">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg p-1 text-slate-800 text-xs">
-                        <SelectItem value="Male" className="cursor-pointer rounded-md focus:bg-slate-100 font-semibold">Male</SelectItem>
-                        <SelectItem value="Female" className="cursor-pointer rounded-md focus:bg-slate-100 font-semibold">Female</SelectItem>
-                        <SelectItem value="Other" className="cursor-pointer rounded-md focus:bg-slate-100 font-semibold">Other</SelectItem>
+                      <SelectContent className="bg-white border-slate-100 shadow-2xl rounded-xl p-1 text-slate-800 text-sm">
+                        <SelectItem value="Male" className="cursor-pointer rounded-lg focus:bg-slate-50 font-medium">Male</SelectItem>
+                        <SelectItem value="Female" className="cursor-pointer rounded-lg focus:bg-slate-50 font-medium">Female</SelectItem>
+                        <SelectItem value="Other" className="cursor-pointer rounded-lg focus:bg-slate-50 font-medium">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -327,60 +327,60 @@ export default function LoginPage() {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Blood Type</Label>
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Blood Type</Label>
                     <Select value={bloodType} onValueChange={(v) => v && setBloodType(v)}>
-                      <SelectTrigger className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg data-[placeholder]:text-slate-400">
+                      <SelectTrigger className="h-10 border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-medium rounded-xl data-[placeholder]:text-slate-400">
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
-                      <SelectContent className="bg-white border-slate-200 shadow-xl rounded-lg p-1 text-slate-800 text-xs">
+                      <SelectContent className="bg-white border-slate-100 shadow-2xl rounded-xl p-1 text-slate-800 text-sm">
                         {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(t => (
-                          <SelectItem key={t} value={t} className="cursor-pointer rounded-md focus:bg-slate-100 font-semibold">{t}</SelectItem>
+                          <SelectItem key={t} value={t} className="cursor-pointer rounded-lg focus:bg-slate-50 font-medium">{t}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Emergency Ph.</Label>
-                    <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Next of kin" className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg" />
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Emergency Ph.</Label>
+                    <Input value={contact} onChange={(e) => setContact(e.target.value)} placeholder="Next of kin" className="h-10 border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-medium rounded-xl" />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Chronic Conditions</Label>
-                    <Input value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder="Thyroid, Migraines..." className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg" />
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Chronic Conditions</Label>
+                    <Input value={conditions} onChange={(e) => setConditions(e.target.value)} placeholder="Thyroid, Migraines..." className="h-10 border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-medium rounded-xl" />
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-[9px] font-black uppercase tracking-widest text-slate-500 ml-1">Known Allergies</Label>
-                    <Input value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="Penicillin, Peanuts..." className="h-9 border-slate-200 bg-slate-50 text-xs focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-bold rounded-lg" />
+                    <Label className="text-xs font-semibold text-slate-700 ml-1">Known Allergies</Label>
+                    <Input value={allergies} onChange={(e) => setAllergies(e.target.value)} placeholder="Penicillin, Peanuts..." className="h-10 border-slate-200 bg-slate-50 text-sm focus:bg-white focus:border-[#137dab]/50 text-slate-900 font-medium rounded-xl" />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-y-3 gap-x-2 pt-1 bg-slate-50 p-4 border border-slate-100 rounded-xl mt-2">
-                  <label className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-700 cursor-pointer group hover:bg-white p-1 rounded-md transition-colors">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${isDiabetic ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-300'}`}>
-                      {isDiabetic && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                <div className="grid grid-cols-2 gap-y-3 gap-x-2 pt-1 bg-slate-50/50 p-4 border border-slate-100 rounded-2xl mt-2">
+                  <label className="flex items-center gap-3 text-xs font-medium text-slate-700 cursor-pointer group hover:bg-white p-2 rounded-xl transition-all">
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${isDiabetic ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-200'}`}>
+                      {isDiabetic && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                     </div>
                     <input type="checkbox" checked={isDiabetic} onChange={(e) => setIsDiabetic(e.target.checked)} className="hidden" />
                     Diabetic
                   </label>
-                  <label className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-700 cursor-pointer group hover:bg-white p-1 rounded-md transition-colors">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${isHypertensive ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-300'}`}>
-                      {isHypertensive && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                  <label className="flex items-center gap-3 text-xs font-medium text-slate-700 cursor-pointer group hover:bg-white p-2 rounded-xl transition-all">
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${isHypertensive ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-200'}`}>
+                      {isHypertensive && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                     </div>
                     <input type="checkbox" checked={isHypertensive} onChange={(e) => setIsHypertensive(e.target.checked)} className="hidden" />
                     Hypertensive
                   </label>
-                  <label className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-700 cursor-pointer group hover:bg-white p-1 rounded-md transition-colors">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${hasHeartDisease ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-300'}`}>
-                      {hasHeartDisease && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                  <label className="flex items-center gap-3 text-xs font-medium text-slate-700 cursor-pointer group hover:bg-white p-2 rounded-xl transition-all">
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${hasHeartDisease ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-200'}`}>
+                      {hasHeartDisease && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                     </div>
                     <input type="checkbox" checked={hasHeartDisease} onChange={(e) => setHasHeartDisease(e.target.checked)} className="hidden" />
                     Heart Disease
                   </label>
-                  <label className="flex items-center gap-3 text-[10px] font-bold uppercase text-slate-700 cursor-pointer group hover:bg-white p-1 rounded-md transition-colors">
-                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-all ${hasAsthma ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-300'}`}>
-                      {hasAsthma && <div className="w-1.5 h-1.5 bg-white rounded-sm" />}
+                  <label className="flex items-center gap-3 text-xs font-medium text-slate-700 cursor-pointer group hover:bg-white p-2 rounded-xl transition-all">
+                    <div className={`w-5 h-5 rounded-md flex items-center justify-center border transition-all ${hasAsthma ? 'bg-[#137dab] border-[#137dab] text-white' : 'bg-white border-slate-200'}`}>
+                      {hasAsthma && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                     </div>
                     <input type="checkbox" checked={hasAsthma} onChange={(e) => setHasAsthma(e.target.checked)} className="hidden" />
                     Asthmatic
@@ -393,69 +393,60 @@ export default function LoginPage() {
             {!(isRegister && role === 'patient') && (
               <Button 
                 type="submit" 
-                className="w-full h-10 bg-[#137dab] text-white hover:bg-[#137dab]/90 text-[10px] font-black uppercase tracking-[0.2em] mt-6 rounded-lg shadow-[0_5px_15px_rgba(19,125,171,0.25)] transition-all active:scale-[0.98] active:shadow-sm"
+                className="w-full h-11 bg-[#137dab] text-white hover:bg-[#137dab]/90 text-sm font-bold mt-6 rounded-xl shadow-lg shadow-[#137dab]/10 transition-all active:scale-[0.98]"
                 disabled={!name || !password || !role || loading}
               >
-                {loading ? <span className="flex items-center gap-2"><Loader2 className="w-3 h-3 animate-spin" /> PROCESSING...</span> : (isRegister ? "INIT ACCESS" : "AUTHORIZE")}
+                {loading ? <span className="flex items-center gap-2"><Loader2 className="w-5 h-5 animate-spin" /> Processing...</span> : (isRegister ? "Create Account" : "Sign In")}
               </Button>
             )}
           </form>
 
-          <div className="mt-6 pt-6 border-t border-slate-100 flex justify-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-            {isRegister ? "Existing user?" : "New user?"}
+          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-center text-sm font-medium text-slate-500">
+            {isRegister ? "Already have an account?" : "New to HealthDesk?"}
             <button 
               onClick={() => setIsRegister(!isRegister)} 
               className="ml-2 text-[#137dab] font-bold hover:underline underline-offset-4 transition-all"
               type="button"
             >
-              {isRegister ? "Switch to Login" : "Initialize Registration"}
+              {isRegister ? "Sign in" : "Create an account"}
             </button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Developer Quick-Start Options */}
-      <div className="w-full max-w-md p-6 bg-white border border-slate-200 rounded-[2rem] space-y-6 shadow-xl relative overflow-hidden animate-reveal z-10" style={{ animationDelay: '200ms' }}>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50 rounded-full blur-2xl" />
+      {/* Testing Sandbox Section */}
+      <div className="w-full max-w-md p-6 bg-white border border-slate-100 rounded-2xl space-y-6 shadow-sm relative overflow-hidden animate-reveal z-10" style={{ animationDelay: '200ms' }}>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-slate-50/50 rounded-full blur-3xl pointer-events-none" />
         
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 relative z-10">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center gap-2">
-            <KeyRound className="w-3 h-3 text-slate-400" /> Sandboxed Credentials
+        <div className="flex items-center justify-between border-b border-slate-50 pb-4 relative z-10">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+            <KeyRound className="w-3.5 h-3.5" /> Demo Environment
           </p>
-          <Button variant="ghost" size="sm" onClick={seedDatabase} className="h-8 text-[9px] uppercase font-black tracking-widest bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-full px-4 transition-all">
-            <DatabaseBackup className="w-3 h-3 mr-2 text-[#137dab]" /> Sync Node
+          <Button variant="ghost" size="sm" onClick={seedDatabase} className="h-8 text-[10px] uppercase font-bold tracking-wider bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-full px-4 transition-all border border-slate-100">
+            <DatabaseBackup className="w-3 h-3 mr-2 text-[#137dab]" /> Initialize Demo
           </Button>
         </div>
 
-        <div className="grid grid-cols-3 gap-2 relative z-10">
-          <Button 
-            size="sm" 
-            className="bg-slate-100 hover:bg-[#137dab] text-slate-700 hover:text-white h-9 w-full font-black uppercase text-[9px] tracking-widest rounded-lg transition-all shadow-sm group"
-            onClick={() => handleAuth(undefined, "Alice Patient", "123", "patient", false)}
-            disabled={loading}
-          >
-             Patient
-          </Button>
-          <Button 
-            size="sm" 
-            className="bg-slate-100 hover:bg-[#137dab] text-slate-700 hover:text-white h-9 w-full font-black uppercase text-[9px] tracking-widest rounded-lg transition-all shadow-sm group"
-            onClick={() => handleAuth(undefined, "Dr. Smith", "123", "doctor", false)}
-            disabled={loading}
-          >
-             Doctor
-          </Button>
-          <Button 
-            size="sm" 
-            className="bg-slate-100 hover:bg-[#137dab] text-slate-700 hover:text-white h-9 w-full font-black uppercase text-[9px] tracking-widest rounded-lg transition-all shadow-sm group"
-            onClick={() => handleAuth(undefined, "Jane Frontdesk", "123", "receptionist", false)}
-            disabled={loading}
-          >
-             Desk
-          </Button>
+        <div className="grid grid-cols-3 gap-3 relative z-10">
+          {[
+            { label: "Patient", user: "Alice Patient", role: "patient" },
+            { label: "Doctor", user: "Dr. Smith", role: "doctor" },
+            { label: "Staff", user: "Jane Frontdesk", role: "receptionist" }
+          ].map((item) => (
+            <Button 
+              key={item.label}
+              size="sm" 
+              className="bg-slate-50 hover:bg-[#137dab] text-slate-600 hover:text-white h-10 w-full font-bold text-[11px] rounded-xl transition-all border border-slate-100 hover:border-[#137dab] shadow-none group"
+              onClick={() => handleAuth(undefined, item.user, "123", item.role as any, false)}
+              disabled={loading}
+            >
+               {item.label}
+            </Button>
+          ))}
         </div>
-        <p className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 text-center leading-relaxed relative z-10">
-           Secure bypass enabled for system testing.<br/>
-           Requires Active Node Sync.
+        <p className="text-[10px] font-medium text-slate-400 text-center leading-relaxed relative z-10">
+           Quick-access accounts for system demonstration.<br/>
+           Requires initial database synchronization.
         </p>
       </div>
     </div>

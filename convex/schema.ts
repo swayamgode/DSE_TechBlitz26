@@ -64,4 +64,13 @@ export default defineSchema({
     data: v.string(),                     // JSON string of the medical state
     blockIndex: v.number(),               // Sequential block number
   }).index("by_patient", ["patientId"]),
+
+  medicalFiles: defineTable({
+    patientId: v.id("users"),
+    storageId: v.id("_storage"),
+    fileName: v.string(),
+    fileType: v.string(),
+    checksum: v.string(), // Integrity hash
+    timestamp: v.string(),
+  }).index("by_patient", ["patientId"]),
 });
